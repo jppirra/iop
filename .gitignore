@@ -1,0 +1,10 @@
+node_modules
+dist
+*.local
+.DS_Store
+*.tsbuildinfo
+.vite
+.gstack/
+
+# Libros de referencia (material con copyright, solo local)
+source/
