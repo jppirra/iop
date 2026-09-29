@@ -1,21 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+
+export const VELOCIDADES = [
+  { id: 'lenta', texto: 'Lenta', ms: 2200 },
+  { id: 'normal', texto: 'Normal', ms: 1300 },
+  { id: 'rapida', texto: 'Rápida', ms: 600 },
+] as const
+
+export type Velocidad = (typeof VELOCIDADES)[number]['id']
 
 interface Props {
   indice: number
   total: number
+  reproduciendo: boolean
+  velocidad: Velocidad
   onIr: (indice: number) => void
+  onReproducir: (reproducir: boolean) => void
+  onVelocidad: (v: Velocidad) => void
 }
 
-export function StepControls({ indice, total, onIr }: Props) {
-  const [reproduciendo, setReproduciendo] = useState(false)
+export function StepControls({ indice, total, reproduciendo, velocidad, onIr, onReproducir, onVelocidad }: Props) {
   const ultimo = total - 1
-  const enCurso = reproduciendo && indice < ultimo
+  const ms = VELOCIDADES.find((v) => v.id === velocidad)!.ms
 
+  // Animación: avanza un paso cada `ms` hasta llegar al final.
   useEffect(() => {
-    if (!enCurso) return
-    const t = setTimeout(() => onIr(indice + 1), 1100)
+    if (!reproduciendo) return
+    if (indice >= ultimo) {
+      onReproducir(false)
+      return
+    }
+    const t = setTimeout(() => onIr(indice + 1), ms)
     return () => clearTimeout(t)
-  }, [enCurso, indice, onIr])
+  }, [reproduciendo, indice, ultimo, ms, onIr, onReproducir])
+
+  const manual = (i: number) => {
+    onReproducir(false)
+    onIr(i)
+  }
 
   return (
     <section className="space-y-2">
@@ -23,40 +44,58 @@ export function StepControls({ indice, total, onIr }: Props) {
         <span className="font-medium text-slate-700">
           Paso {indice + 1} de {total}
         </span>
-        <button
-          className="text-xs font-medium text-teal-700 hover:underline disabled:text-slate-400 disabled:no-underline"
-          onClick={() => {
-            if (indice >= ultimo) onIr(0)
-            setReproduciendo(!enCurso)
-          }}
-        >
-          {enCurso ? 'Pausar' : 'Reproducir'}
-        </button>
+        <div className="inline-flex rounded-md border border-slate-200 p-0.5 text-xs" role="group" aria-label="Velocidad">
+          {VELOCIDADES.map((v) => (
+            <button
+              key={v.id}
+              aria-pressed={velocidad === v.id}
+              onClick={() => onVelocidad(v.id)}
+              className={`rounded px-1.5 py-0.5 ${velocidad === v.id ? 'bg-slate-700 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+            >
+              {v.texto}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+        <div
+          className="h-full rounded-full bg-teal-600 transition-[width] duration-300"
+          style={{ width: `${total > 1 ? (indice / ultimo) * 100 : 100}%` }}
+        />
       </div>
       <input
         type="range"
         min={0}
         max={ultimo}
         value={indice}
-        onChange={(e) => onIr(Number(e.target.value))}
+        onChange={(e) => manual(Number(e.target.value))}
         className="w-full accent-teal-700"
         aria-label="Paso"
       />
-      <div className="grid grid-cols-3 gap-2">
-        <button className="btn" onClick={() => onIr(indice - 1)} disabled={indice === 0}>
+      <button
+        className="btn btn-primario w-full"
+        onClick={() => {
+          if (reproduciendo) onReproducir(false)
+          else {
+            if (indice >= ultimo) onIr(0)
+            onReproducir(true)
+          }
+        }}
+      >
+        {reproduciendo ? 'Pausar' : indice >= ultimo ? 'Repetir animación' : 'Reproducir'}
+      </button>
+      <div className="grid grid-cols-4 gap-1.5">
+        <button className="btn px-1" onClick={() => manual(0)} disabled={indice === 0} title="Reiniciar">
+          Reiniciar
+        </button>
+        <button className="btn px-1" onClick={() => manual(indice - 1)} disabled={indice === 0}>
           Anterior
         </button>
-        <button className="btn btn-primario" onClick={() => onIr(indice + 1)} disabled={indice >= ultimo}>
+        <button className="btn px-1" onClick={() => manual(indice + 1)} disabled={indice >= ultimo}>
           Siguiente
         </button>
-        <button
-          className="btn"
-          onClick={() => {
-            setReproduciendo(false)
-            onIr(0)
-          }}
-        >
-          Reiniciar
+        <button className="btn px-1" onClick={() => manual(ultimo)} disabled={indice >= ultimo} title="Ir al resultado">
+          Final
         </button>
       </div>
     </section>

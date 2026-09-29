@@ -116,3 +116,25 @@ export function validarParametroNodo(
 export function validarGrafoNoVacio(grafo: Grafo, v: Validacion): void {
   if (grafo.nodos.length === 0) v.errores.push('El grafo está vacío: agregá nodos y aristas.')
 }
+
+/** Nodo alcanzable más lejano (por distancia acumulada) desde `origen`. */
+export function nodoMasLejano(grafo: Grafo, origen: string): string {
+  const ady = listaAdyacencia(grafo)
+  const dist = new Map([[origen, 0]])
+  const pendientes = new Set([origen])
+  const fijados = new Set<string>()
+  while (pendientes.size) {
+    const u = [...pendientes].reduce((a, b) => (dist.get(a)! <= dist.get(b)! ? a : b))
+    pendientes.delete(u)
+    fijados.add(u)
+    for (const { nodo, arista } of ady.get(u) ?? []) {
+      if (fijados.has(nodo)) continue
+      const d = dist.get(u)! + arista.peso
+      if (d < (dist.get(nodo) ?? Infinity)) {
+        dist.set(nodo, d)
+        pendientes.add(nodo)
+      }
+    }
+  }
+  return [...dist.entries()].reduce((a, b) => (b[1] > a[1] ? b : a))[0]
+}

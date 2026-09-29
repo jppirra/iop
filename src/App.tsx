@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { estrategias } from './algorithms'
+import { estrategias, listaEstrategias } from './algorithms'
+import { nodoMasLejano } from './algorithms/utils'
 import { BulkLoadPanel } from './components/BulkLoadPanel'
 import { useDialogo } from './components/DialogoEntrada'
 import { GraphCanvas, type CanvasApi } from './components/GraphCanvas'
 import { IntegrantesDialog } from './components/IntegrantesDialog'
 import { ResultsPanel } from './components/ResultsPanel'
-import { StepControls } from './components/StepControls'
+import { PantallaInicio, type ModoCarga } from './components/PantallaInicio'
+import { StepControls, type Velocidad } from './components/StepControls'
 import { StrategySelector } from './components/StrategySelector'
 import { Toolbar } from './components/Toolbar'
-import { NOMBRE_APP } from './examples/integrantes'
+import { NOMBRE_APP, VERSION } from './examples/integrantes'
+import { grafoAleatorio } from './lib/aleatorio'
 import { ejemplosLibro, type EjemploLibro } from './examples/libro'
 import { useHistorial } from './hooks/useHistorial'
 import {
@@ -34,16 +37,16 @@ function parametrosPorNombre(grafo: Grafo, porNombre: EjemploLibro['parametros']
   return Object.fromEntries(Object.entries(porNombre).map(([clave, nombre]) => [clave, id(nombre)]))
 }
 
-const ejemploInicial = ejemplosLibro[0]
-const grafoInicial = desdePlano(ejemploInicial.grafo, false)
-
 export default function App() {
-  const { actual: grafo, aplicar, deshacer, puedeDeshacer } = useHistorial<Grafo>(grafoInicial)
-  const [estrategiaId, setEstrategiaId] = useState(ejemploInicial.estrategia)
-  const [parametros, setParametros] = useState<Parametros>(() => parametrosPorNombre(grafoInicial, ejemploInicial.parametros))
+  const { actual: grafo, aplicar, deshacer, puedeDeshacer } = useHistorial<Grafo>(grafoVacio())
+  const [estrategiaId, setEstrategiaId] = useState(listaEstrategias[0].id)
+  const [parametros, setParametros] = useState<Parametros>({})
   const [ejecucion, setEjecucion] = useState<{ clave: string; datos: Ejecucion } | null>(null)
   const [indice, setIndice] = useState(0)
+  const [reproduciendo, setReproduciendo] = useState(false)
+  const [velocidad, setVelocidad] = useState<Velocidad>('normal')
   const [pestana, setPestana] = useState<'ejecutar' | 'carga'>('ejecutar')
+  const [inicio, setInicio] = useState<'primera' | 'abierta' | 'cerrada'>('primera')
   const [verIntegrantes, setVerIntegrantes] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
   const canvas = useRef<CanvasApi>(null)
@@ -103,11 +106,13 @@ export default function App() {
 
   // ---------- Ejecución ----------
 
-  const ejecutar = (modo: 'todo' | 'pasos') => {
+  /** "animado" reproduce los pasos solo; "pasos" queda en el primero para avanzar a mano. */
+  const ejecutar = (modo: 'animado' | 'pasos') => {
     if (validacion.errores.length) return
     const datos = estrategia.ejecutar(grafoEfectivo, parametrosEfectivos)
     setEjecucion({ clave: claveActual, datos })
-    setIndice(modo === 'todo' ? datos.pasos.length - 1 : 0)
+    setIndice(0)
+    setReproduciendo(modo === 'animado')
   }
 
   const irAPaso = useCallback(
@@ -192,6 +197,27 @@ export default function App() {
     ajustarLuego()
   }
 
+  const cargarAleatorio = () => {
+    const nuevo = desdePlano(grafoAleatorio(), false)
+    const origen = nuevo.nodos[0].id
+    aplicar(() => nuevo)
+    // El destino es el nodo más lejano, para que la ruta tenga varios tramos.
+    setParametros({ inicio: origen, origen, destino: nodoMasLejano(nuevo, origen) })
+    setPestana('ejecutar')
+    avisar('Se generó un grafo aleatorio conexo. Tocá "Ejecutar" para ver el algoritmo.')
+    ajustarLuego()
+  }
+
+  const elegirInicio = (id: string, modo: ModoCarga) => {
+    setEstrategiaId(id)
+    setInicio('cerrada')
+    if (modo === 'aleatorio') return cargarAleatorio()
+    aplicar((g) => (g.nodos.length ? grafoVacio(g.dirigido) : g))
+    setParametros({})
+    setPestana(modo === 'masiva' ? 'carga' : 'ejecutar')
+    if (modo === 'manual') avisar('Doble click en el lienzo para crear el primer nodo.')
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 lg:h-screen">
       <header className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
@@ -214,6 +240,12 @@ export default function App() {
             </option>
           ))}
         </select>
+        <button className="btn" onClick={() => setInicio('abierta')}>
+          Inicio
+        </button>
+        <button className="btn" onClick={cargarAleatorio}>
+          Aleatorio
+        </button>
         <button className="btn" onClick={() => setVerIntegrantes(true)}>
           Integrantes
         </button>
@@ -251,12 +283,20 @@ export default function App() {
                   validacion={validacion}
                   onCambiarEstrategia={setEstrategiaId}
                   onCambiarParametro={(clave: ClaveParametro, id: string) => setParametros((p) => ({ ...p, [clave]: id }))}
-                  onEjecutarTodo={() => ejecutar('todo')}
+                  onEjecutar={() => ejecutar('animado')}
                   onPasoAPaso={() => ejecutar('pasos')}
                 />
                 {vigente && (
                   <div className="border-t border-slate-200 pt-4">
-                    <StepControls indice={indice} total={vigente.pasos.length} onIr={irAPaso} />
+                    <StepControls
+                      indice={indice}
+                      total={vigente.pasos.length}
+                      reproduciendo={reproduciendo}
+                      velocidad={velocidad}
+                      onIr={irAPaso}
+                      onReproducir={setReproduciendo}
+                      onVelocidad={setVelocidad}
+                    />
                   </div>
                 )}
                 <Leyenda />
@@ -310,11 +350,15 @@ export default function App() {
         <aside className="w-full shrink-0 overflow-auto border-slate-200 bg-white p-4 lg:w-[26rem] lg:border-l">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Resultados</h2>
           {vigente ? (
-            <ResultsPanel ejecucion={vigente} indice={Math.min(indice, vigente.pasos.length - 1)} onIr={irAPaso} />
+            <ResultsPanel ejecucion={vigente} indice={Math.min(indice, vigente.pasos.length - 1)} onIr={(i) => {
+                setReproduciendo(false)
+                irAPaso(i)
+              }}
+            />
           ) : (
             <div className="space-y-2 text-sm text-slate-500">
               <p>
-                Elegí una estrategia y tocá <strong className="text-slate-700">Ejecutar todo</strong> o{' '}
+                Elegí una estrategia y tocá <strong className="text-slate-700">Ejecutar</strong> (animado) o{' '}
                 <strong className="text-slate-700">Paso a paso</strong>.
               </p>
               <p>
@@ -327,6 +371,19 @@ export default function App() {
         </aside>
       </main>
 
+      <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 bg-white px-4 py-1.5 text-xs text-slate-500">
+        <span>{NOMBRE_APP} · UTN · Investigación Operativa</span>
+        <span className="font-mono">{VERSION}</span>
+      </footer>
+
+      {inicio !== 'cerrada' && (
+        <PantallaInicio
+          estrategiaInicial={estrategiaId}
+          cerrable={inicio === 'abierta'}
+          onElegir={elegirInicio}
+          onCerrar={() => setInicio('cerrada')}
+        />
+      )}
       {dialogo}
       {verIntegrantes && <IntegrantesDialog onCerrar={() => setVerIntegrantes(false)} />}
     </div>

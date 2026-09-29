@@ -8,7 +8,7 @@ interface Props {
   validacion: Validacion
   onCambiarEstrategia: (id: string) => void
   onCambiarParametro: (clave: ClaveParametro, id: string) => void
-  onEjecutarTodo: () => void
+  onEjecutar: () => void
   onPasoAPaso: () => void
 }
 
@@ -75,8 +75,8 @@ export function StrategySelector(p: Props) {
       ))}
 
       <div className="grid grid-cols-2 gap-2">
-        <button className="btn btn-primario" disabled={!puedeEjecutar} onClick={p.onEjecutarTodo}>
-          Ejecutar todo
+        <button className="btn btn-primario" disabled={!puedeEjecutar} onClick={p.onEjecutar}>
+          Ejecutar
         </button>
         <button className="btn" disabled={!puedeEjecutar} onClick={p.onPasoAPaso}>
           Paso a paso

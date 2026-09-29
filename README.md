@@ -1,5 +1,7 @@
 # Grupo 3 - IOP 2026
 
+Versión **v1.000.001**
+
 App web educativa para probar los algoritmos de grafos del capítulo 11 "Modelos de redes" de Render (*Métodos cuantitativos para los negocios*). Permite armar un grafo visualmente o por carga masiva, ejecutar un algoritmo y ver el resultado paso a paso, con la explicación de cada decisión.
 
 ## Integrantes
@@ -26,6 +28,10 @@ npm run build      # build de producción en dist/
 
 ## Qué hace
 
+**Pantalla de inicio**
+
+Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dibujarlo), carga masiva (texto, CSV o JSON) o ejemplo aleatorio (grafo conexo generado al azar; en Dijkstra el destino es el nodo más lejano al origen). Se vuelve a abrir con el botón "Inicio"; el botón "Aleatorio" genera otro grafo al azar.
+
 **Algoritmos (selector "Estrategia")**
 
 - Árbol mínimo - Prim: se elige el nodo inicial.
@@ -51,7 +57,7 @@ npm run build      # build de producción en dist/
 
 **Ejecución**
 
-- "Ejecutar todo" o "Paso a paso" (Anterior / Siguiente / Reiniciar / Reproducir).
+- "Ejecutar" reproduce los pasos animados desde el principio (velocidad lenta, normal o rápida; se puede pausar). "Paso a paso" deja avanzar a mano (Reiniciar / Anterior / Siguiente / Final).
 - En cada paso se resalta lo evaluado (naranja), lo incluido en la solución (verde), lo descartado (gris) y el resultado final (azul).
 - Árbol mínimo: tabla de aristas elegidas en orden con distancia acumulada y total.
 - Dijkstra: ruta, distancia total y tabla de etiquetas `[distancia, previo]` por iteración.
@@ -94,4 +100,4 @@ El selector, la validación, el paso a paso y el resaltado en el grafo funcionan
 
 ## Tests
 
-`npm test` corre 28 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, y los tres parsers con sus errores por línea y la exportación ida y vuelta.
+`npm test` corre 31 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, y los tres parsers con sus errores por línea la exportación ida y vuelta, y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
