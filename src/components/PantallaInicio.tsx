@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { listaEstrategias } from '../algorithms'
 import { NOMBRE_APP } from '../examples/integrantes'
+import type { Estrategia } from '../types/graph'
 
 export type ModoCarga = 'manual' | 'masiva' | 'aleatorio'
 
 interface Props {
+  estrategias: Estrategia[]
+  /** Modos de carga habilitados en /config (la carga manual siempre está). */
+  modos: { masiva: boolean; aleatorio: boolean }
   estrategiaInicial: string
   /** Si es false (primera vez) no se puede cerrar sin elegir. */
   cerrable: boolean
@@ -33,7 +36,8 @@ const MODOS: { id: ModoCarga; titulo: string; descripcion: string; icono: string
   },
 ]
 
-export function PantallaInicio({ estrategiaInicial, cerrable, onElegir, onCerrar }: Props) {
+export function PantallaInicio({ estrategias, modos, estrategiaInicial, cerrable, onElegir, onCerrar }: Props) {
+  const modosVisibles = MODOS.filter((m) => m.id === 'manual' || modos[m.id])
   const [estrategiaId, setEstrategiaId] = useState(estrategiaInicial)
 
   useEffect(() => {
@@ -64,8 +68,8 @@ export function PantallaInicio({ estrategiaInicial, cerrable, onElegir, onCerrar
         </div>
 
         <h3 className="mt-6 text-sm font-semibold text-slate-700">1. Elegí el algoritmo</h3>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          {listaEstrategias.map((e) => {
+        <div className={`mt-2 grid gap-2 ${columnas(estrategias.length)}`}>
+          {estrategias.map((e) => {
             const activa = e.id === estrategiaId
             return (
               <button
@@ -85,8 +89,8 @@ export function PantallaInicio({ estrategiaInicial, cerrable, onElegir, onCerrar
         </div>
 
         <h3 className="mt-6 text-sm font-semibold text-slate-700">2. ¿Cómo querés cargar el grafo?</h3>
-        <div className="mt-2 grid gap-2 sm:grid-cols-3">
-          {MODOS.map((m) => (
+        <div className={`mt-2 grid gap-2 ${columnas(modosVisibles.length)}`}>
+          {modosVisibles.map((m) => (
             <button
               key={m.id}
               onClick={() => onElegir(estrategiaId, m.id)}
@@ -108,4 +112,8 @@ export function PantallaInicio({ estrategiaInicial, cerrable, onElegir, onCerrar
       </div>
     </div>
   )
+}
+
+function columnas(n: number) {
+  return n >= 3 ? 'sm:grid-cols-3' : n === 2 ? 'sm:grid-cols-2' : 'grid-cols-1'
 }

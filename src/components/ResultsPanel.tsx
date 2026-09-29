@@ -4,10 +4,12 @@ import type { Ejecucion, Paso, ResultadoArbol, ResultadoRuta } from '../types/gr
 interface Props {
   ejecucion: Ejecucion
   indice: number
+  /** Lista "Todos los pasos". */
+  mostrarHistorial: boolean
   onIr: (indice: number) => void
 }
 
-export function ResultsPanel({ ejecucion, indice, onIr }: Props) {
+export function ResultsPanel({ ejecucion, indice, mostrarHistorial, onIr }: Props) {
   const paso = ejecucion.pasos[indice]
   const final = indice === ejecucion.pasos.length - 1
   const { resultado } = ejecucion
@@ -19,7 +21,7 @@ export function ResultsPanel({ ejecucion, indice, onIr }: Props) {
       {resultado.tipo === 'arbol' && <ResultadoArbolVista resultado={resultado} paso={paso} final={final} />}
       {resultado.tipo === 'ruta' && <ResultadoRutaVista resultado={resultado} paso={paso} final={final} />}
 
-      <Historial pasos={ejecucion.pasos} indice={indice} onIr={onIr} />
+      {mostrarHistorial && <Historial pasos={ejecucion.pasos} indice={indice} onIr={onIr} />}
     </div>
   )
 }

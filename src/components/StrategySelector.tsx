@@ -1,7 +1,9 @@
-import { listaEstrategias } from '../algorithms'
 import type { ClaveParametro, Estrategia, Grafo, Parametros, Validacion } from '../types/graph'
 
 interface Props {
+  /** Estrategias habilitadas en /config. */
+  estrategias: Estrategia[]
+  mostrarPasoAPaso: boolean
   estrategia: Estrategia
   grafo: Grafo
   parametros: Parametros
@@ -13,7 +15,7 @@ interface Props {
 }
 
 export function StrategySelector(p: Props) {
-  const grupos = [...new Set(listaEstrategias.map((e) => e.grupo))]
+  const grupos = [...new Set(p.estrategias.map((e) => e.grupo))]
   const puedeEjecutar = p.validacion.errores.length === 0
 
   return (
@@ -27,7 +29,7 @@ export function StrategySelector(p: Props) {
         >
           {grupos.map((g) => (
             <optgroup key={g} label={g}>
-              {listaEstrategias
+              {p.estrategias
                 .filter((e) => e.grupo === g)
                 .map((e) => (
                   <option key={e.id} value={e.id}>
@@ -74,13 +76,15 @@ export function StrategySelector(p: Props) {
         </p>
       ))}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${p.mostrarPasoAPaso ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <button className="btn btn-primario" disabled={!puedeEjecutar} onClick={p.onEjecutar}>
           Ejecutar
         </button>
-        <button className="btn" disabled={!puedeEjecutar} onClick={p.onPasoAPaso}>
-          Paso a paso
-        </button>
+        {p.mostrarPasoAPaso && (
+          <button className="btn" disabled={!puedeEjecutar} onClick={p.onPasoAPaso}>
+            Paso a paso
+          </button>
+        )}
       </div>
     </section>
   )

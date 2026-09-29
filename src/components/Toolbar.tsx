@@ -1,4 +1,6 @@
 interface Props {
+  /** false si ninguno de los algoritmos habilitados acepta grafos dirigidos. */
+  mostrarDirigido: boolean
   dirigido: boolean
   dirigidoForzado: boolean
   puedeDeshacer: boolean
@@ -13,6 +15,7 @@ interface Props {
 export function Toolbar(p: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-3 py-2">
+      {p.mostrarDirigido && (
       <div className="inline-flex rounded-md border border-slate-300 p-0.5 text-sm" role="group" aria-label="Tipo de grafo">
         {[
           { valor: false, texto: 'No dirigido' },
@@ -34,7 +37,10 @@ export function Toolbar(p: Props) {
           )
         })}
       </div>
-      {p.dirigidoForzado && <span className="text-xs text-slate-500">El árbol mínimo usa siempre grafo no dirigido</span>}
+      )}
+      {p.mostrarDirigido && p.dirigidoForzado && (
+        <span className="text-xs text-slate-500">El árbol mínimo usa siempre grafo no dirigido</span>
+      )}
 
       <div className="ml-auto flex flex-wrap gap-2">
         <button className="btn" onClick={p.onDeshacer} disabled={!p.puedeDeshacer} title="Ctrl+Z">

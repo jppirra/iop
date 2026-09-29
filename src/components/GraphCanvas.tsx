@@ -15,6 +15,8 @@ interface Props {
   grafo: Grafo
   /** Dirección con la que se dibuja (Prim/Kruskal la fuerzan a no dirigido). */
   dirigido: boolean
+  /** Transiciones de color al cambiar de paso. */
+  animaciones: boolean
   paso: Paso | null
   /** Mientras hay un diálogo abierto se ignoran teclas y clicks. */
   bloqueado: boolean
@@ -28,7 +30,8 @@ interface Props {
 
 const CLASES_PASO = 'actual evaluada incluida descartada resultado'
 
-function estilos(dirigido: boolean): StylesheetJson {
+function estilos(dirigido: boolean, animaciones: boolean): StylesheetJson {
+  const duracion = animaciones ? 350 : 0
   return [
     {
       selector: 'node',
@@ -46,7 +49,7 @@ function estilos(dirigido: boolean): StylesheetJson {
         height: 34,
         shape: 'round-rectangle',
         'transition-property': 'background-color, border-color, border-width',
-        'transition-duration': 350,
+        'transition-duration': duracion,
         'text-wrap': 'none',
       } as never,
     },
@@ -67,7 +70,7 @@ function estilos(dirigido: boolean): StylesheetJson {
         'text-background-padding': '2px',
         'text-background-shape': 'roundrectangle',
         'transition-property': 'line-color, target-arrow-color, width, opacity',
-        'transition-duration': 350,
+        'transition-duration': duracion,
       },
     },
     { selector: 'edge.descartada', style: { 'line-color': '#cbd5e1', 'line-style': 'dotted', opacity: 0.6 } },
@@ -92,7 +95,7 @@ function estilos(dirigido: boolean): StylesheetJson {
 }
 
 export function GraphCanvas(props: Props) {
-  const { ref, grafo, dirigido, paso } = props
+  const { ref, grafo, dirigido, animaciones, paso } = props
   const cyRef = useRef<Core | null>(null)
   const origenRef = useRef<string | null>(null)
   const [origenPendiente, setOrigenPendiente] = useState<string | null>(null)
@@ -107,7 +110,7 @@ export function GraphCanvas(props: Props) {
     ],
     [grafo],
   )
-  const hojaEstilos = useMemo(() => estilos(dirigido), [dirigido])
+  const hojaEstilos = useMemo(() => estilos(dirigido, animaciones), [dirigido, animaciones])
 
   const elegirOrigen = (id: string | null) => {
     const cy = cyRef.current

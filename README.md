@@ -73,6 +73,16 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 
 Las aristas de la fig. 11.1 que no forman parte del árbol (1–4, 3–5, 4–6, 5–7, 6–7) se reconstruyeron a partir de los números de la figura, ya que en el texto extraído del libro el dibujo aparece desordenado. Las 7 aristas del árbol y el recorrido paso a paso coinciden con la tabla 11.1.
 
+## Configuración privada (`/config`)
+
+Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) se elige qué se muestra:
+
+- **Algoritmos disponibles**: Prim, Kruskal y/o Dijkstra (al menos uno). Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
+- **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar e integrantes.
+- Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
+
+La configuración se guarda en el `localStorage` del navegador: aplica a ese navegador y se sincroniza con las pestañas abiertas. La pantalla está oculta, no protegida con contraseña. Si la app se publica en un hosting estático, hay que configurar que `/config` sirva `index.html` (en `npm run dev` y `npm run preview` ya funciona).
+
 ## Arquitectura
 
 ```
@@ -82,7 +92,8 @@ src/
     prim.ts  kruskal.ts  dijkstra.ts  utils.ts  index.ts (registro)
   parsers/              texto.ts, csv.ts, json.ts, exportar.ts, index.ts (detección de formato)
   lib/grafo.ts          Operaciones inmutables sobre el grafo (agregar, eliminar, fusionar…)
-  examples/             Ejemplos del libro e integrantes
+  examples/             Ejemplos del libro, integrantes y versión
+  config/               Configuración (/config): modelo, persistencia y pantalla
   hooks/useHistorial.ts Estado con historial para Deshacer
   components/           GraphCanvas, Toolbar, BulkLoadPanel, StrategySelector,
                         StepControls, ResultsPanel, DialogoEntrada, IntegrantesDialog
@@ -100,4 +111,4 @@ El selector, la validación, el paso a paso y el resaltado en el grafo funcionan
 
 ## Tests
 
-`npm test` corre 31 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, y los tres parsers con sus errores por línea la exportación ida y vuelta, y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
+`npm test` corre 35 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, y los tres parsers con sus errores por línea la exportación ida y vuelta, y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).

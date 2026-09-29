@@ -4,6 +4,7 @@ import type { Grafo } from '../types/graph'
 
 interface Props {
   grafo: Grafo
+  mostrarExportar: boolean
   onCargar: (plano: GrafoPlano, modo: 'reemplazar' | 'agregar') => void
 }
 
@@ -24,7 +25,7 @@ function descargar(nombre: string, contenido: string, tipo: string) {
   URL.revokeObjectURL(url)
 }
 
-export function BulkLoadPanel({ grafo, onCargar }: Props) {
+export function BulkLoadPanel({ grafo, mostrarExportar, onCargar }: Props) {
   const [texto, setTexto] = useState('')
   const [formato, setFormato] = useState<Formato | 'auto'>('auto')
   const [archivo, setArchivo] = useState<string | undefined>()
@@ -124,6 +125,7 @@ export function BulkLoadPanel({ grafo, onCargar }: Props) {
         </button>
       </div>
 
+      {mostrarExportar && (
       <div className="border-t border-slate-200 pt-3">
         <p className="mb-2 text-sm font-medium text-slate-700">Exportar grafo actual</p>
         <div className="grid grid-cols-2 gap-2">
@@ -143,6 +145,7 @@ export function BulkLoadPanel({ grafo, onCargar }: Props) {
           </button>
         </div>
       </div>
+      )}
     </section>
   )
 }
