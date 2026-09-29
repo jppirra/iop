@@ -81,7 +81,7 @@ Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) s
 - **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar e integrantes.
 - Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
 
-La configuración se guarda en el `localStorage` del navegador: aplica a ese navegador y se sincroniza con las pestañas abiertas. La pantalla está oculta, no protegida con contraseña. Si la app se publica en un hosting estático, hay que configurar que `/config` sirva `index.html` (en `npm run dev` y `npm run preview` ya funciona).
+La configuración se guarda en el `localStorage` del navegador: aplica a ese navegador y se sincroniza con las pestañas abiertas. La pantalla está oculta, no protegida con contraseña. En Vercel esto lo resuelve `vercel.json` (redirige todas las rutas a `index.html`); en `npm run dev` y `npm run preview` ya funciona.
 
 ## Arquitectura
 
