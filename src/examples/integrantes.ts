@@ -1,4 +1,5 @@
 export const NOMBRE_APP = 'Grupo 3 - IOP 2026'
+export const SUBTITULO_APP = 'Trabajo práctico integrador'
 
 export const integrantes = [
   { nombre: 'Junco Paola', legajo: '43516' },

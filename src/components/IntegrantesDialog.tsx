@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { integrantes, NOMBRE_APP } from '../examples/integrantes'
+import { integrantes, NOMBRE_APP, SUBTITULO_APP } from '../examples/integrantes'
 
 export function IntegrantesDialog({ onCerrar }: { onCerrar: () => void }) {
   useEffect(() => {
@@ -17,7 +17,7 @@ export function IntegrantesDialog({ onCerrar }: { onCerrar: () => void }) {
         <h2 id="titulo-integrantes" className="text-base font-semibold text-slate-800">
           Integrantes · {NOMBRE_APP}
         </h2>
-        <p className="mt-1 text-sm text-slate-500">UTN · Investigación Operativa · Cap. 11 "Modelos de redes"</p>
+        <p className="mt-1 text-sm text-slate-500">UTN · Investigación Operativa · {SUBTITULO_APP}</p>
         <table className="mt-4 w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">

@@ -12,7 +12,7 @@ import { PantallaInicio, type ModoCarga } from './components/PantallaInicio'
 import { StepControls, VELOCIDADES, type Velocidad } from './components/StepControls'
 import { StrategySelector } from './components/StrategySelector'
 import { Toolbar } from './components/Toolbar'
-import { NOMBRE_APP, VERSION } from './examples/integrantes'
+import { NOMBRE_APP, SUBTITULO_APP, VERSION } from './examples/integrantes'
 import { grafoAleatorio } from './lib/aleatorio'
 import { ejemplosLibro, type EjemploLibro } from './examples/libro'
 import { useHistorial } from './hooks/useHistorial'
@@ -255,9 +255,12 @@ export default function App() {
   return (
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 lg:h-screen">
       <header className="flex flex-wrap items-center gap-3 border-b border-slate-200 bg-white px-4 py-3">
-        <div className="mr-auto">
-          <h1 className="text-lg font-bold text-teal-800">{NOMBRE_APP}</h1>
-          <p className="text-xs text-slate-500">Modelos de redes · Render, cap. 11</p>
+        <div className="mr-auto flex items-center gap-3">
+          <img src="/logo-utn.png" alt="UTN" className="h-10 w-auto" />
+          <div>
+            <h1 className="text-lg font-bold text-teal-800">{NOMBRE_APP}</h1>
+            <p className="text-xs text-slate-500">{SUBTITULO_APP}</p>
+          </div>
         </div>
         {config.ejemplosLibro && ejemplosVisibles.length > 0 && (
           <select
@@ -438,6 +441,7 @@ export default function App() {
         <PantallaInicio
           estrategias={visibles}
           modos={{ masiva: verCargaMasiva, aleatorio: config.aleatorio }}
+          mostrarEjemplos={config.ejemplosLibro && ejemplosVisibles.length > 0}
           estrategiaInicial={estrategia.id}
           cerrable={inicio === 'abierta'}
           onElegir={elegirInicio}

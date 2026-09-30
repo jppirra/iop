@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { NOMBRE_APP } from '../examples/integrantes'
+import { NOMBRE_APP, SUBTITULO_APP } from '../examples/integrantes'
 import type { Estrategia } from '../types/graph'
 
 export type ModoCarga = 'manual' | 'masiva' | 'aleatorio'
@@ -8,6 +8,8 @@ interface Props {
   estrategias: Estrategia[]
   /** Modos de carga habilitados en /config (la carga manual siempre está). */
   modos: { masiva: boolean; aleatorio: boolean }
+  /** Menú "Ejemplos del libro" visible (según /config). */
+  mostrarEjemplos: boolean
   estrategiaInicial: string
   /** Si es false (primera vez) no se puede cerrar sin elegir. */
   cerrable: boolean
@@ -36,7 +38,7 @@ const MODOS: { id: ModoCarga; titulo: string; descripcion: string; icono: string
   },
 ]
 
-export function PantallaInicio({ estrategias, modos, estrategiaInicial, cerrable, onElegir, onCerrar }: Props) {
+export function PantallaInicio({ estrategias, modos, mostrarEjemplos, estrategiaInicial, cerrable, onElegir, onCerrar }: Props) {
   const modosVisibles = MODOS.filter((m) => m.id === 'manual' || modos[m.id])
   const [estrategiaId, setEstrategiaId] = useState(estrategiaInicial)
 
@@ -58,7 +60,7 @@ export function PantallaInicio({ estrategias, modos, estrategiaInicial, cerrable
             <h2 id="titulo-inicio" className="text-xl font-bold text-teal-800">
               {NOMBRE_APP}
             </h2>
-            <p className="text-sm text-slate-500">Modelos de redes · Render, cap. 11</p>
+            <p className="text-sm text-slate-500">{SUBTITULO_APP}</p>
           </div>
           {cerrable && (
             <button onClick={onCerrar} className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Cerrar">
@@ -106,7 +108,7 @@ export function PantallaInicio({ estrategias, modos, estrategiaInicial, cerrable
         </div>
 
         <p className="mt-5 text-xs text-slate-400">
-          También podés cargar los ejemplos del libro desde el menú de la cabecera. Esta pantalla se vuelve a abrir con el botón
+          {mostrarEjemplos && 'También podés cargar los ejemplos del libro desde el menú de la cabecera. '}Esta pantalla se vuelve a abrir con el botón
           "Inicio".
         </p>
       </div>
