@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { listaEstrategias } from '../algorithms'
 import { NOMBRE_APP, VERSION } from '../examples/integrantes'
-import { COMPONENTES, configPorDefecto, permiteDirigido, type ComponenteConfigurable } from './configuracion'
+import { aJson, COMPONENTES, permiteDirigido, type ComponenteConfigurable } from './configuracion'
 import { useConfiguracion } from './useConfiguracion'
 
 function Interruptor({
@@ -34,8 +35,29 @@ function Interruptor({
 
 /** Pantalla privada de configuración: no hay enlaces a ella desde la app, se entra escribiendo /config. */
 export function ConfigPage() {
-  const { config, actualizar } = useConfiguracion()
+  const { config, esLocal, actualizar, usarDelProyecto } = useConfiguracion()
   const dirigido = permiteDirigido(config, listaEstrategias)
+  const json = aJson(config)
+  const [copiado, setCopiado] = useState(false)
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(json)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      setCopiado(false)
+    }
+  }
+
+  const descargar = () => {
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'config.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const alternarEstrategia = (id: string, activa: boolean) =>
     actualizar((c) => ({
@@ -58,9 +80,30 @@ export function ConfigPage() {
           </a>
         </header>
 
-        <p className="rounded-lg bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-          Los cambios se guardan al instante en este navegador y se aplican también en las pestañas de la app que estén abiertas.
-        </p>
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm shadow-sm ${
+            esLocal ? 'bg-amber-50 text-amber-900' : 'bg-white text-slate-600'
+          }`}
+        >
+          <p>
+            {esLocal ? (
+              <>
+                <strong>Configuración local:</strong> tus cambios valen solo en este navegador. Los demás ven la configuración
+                del proyecto.
+              </>
+            ) : (
+              <>
+                <strong>Configuración del proyecto</strong> (<code>src/config/config.json</code>): es la que ven todos. Si
+                cambiás algo acá, se guarda solo en este navegador.
+              </>
+            )}
+          </p>
+          {esLocal && (
+            <button className="btn" onClick={usarDelProyecto}>
+              Volver a la del proyecto
+            </button>
+          )}
+        </div>
 
         <section className="rounded-xl bg-white p-5 shadow-sm">
           <h2 className="font-semibold text-slate-800">Algoritmos disponibles</h2>
@@ -120,10 +163,28 @@ export function ConfigPage() {
           </ul>
         </section>
 
-        <footer className="flex items-center justify-between text-xs text-slate-500">
-          <button className="btn" onClick={() => actualizar(() => configPorDefecto(listaEstrategias))}>
-            Restaurar valores por defecto
-          </button>
+        <section className="rounded-xl bg-white p-5 shadow-sm">
+          <h2 className="font-semibold text-slate-800">Aplicar para todos</h2>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-slate-600">
+            <li>Dejá la configuración como la querés en esta pantalla.</li>
+            <li>
+              Copiá el JSON y reemplazá el contenido de <code className="rounded bg-slate-100 px-1">src/config/config.json</code>{' '}
+              en el repositorio.
+            </li>
+            <li>Hacé commit y push: Vercel publica la nueva versión y la ven todos.</li>
+          </ol>
+          <pre className="mt-3 max-h-64 overflow-auto rounded-md bg-slate-900 p-3 text-xs leading-relaxed text-slate-100">{json}</pre>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button className="btn btn-primario" onClick={copiar}>
+              {copiado ? 'Copiado ✓' : 'Copiar JSON'}
+            </button>
+            <button className="btn" onClick={descargar}>
+              Descargar config.json
+            </button>
+          </div>
+        </section>
+
+        <footer className="text-right text-xs text-slate-500">
           <span className="font-mono">{VERSION}</span>
         </footer>
       </div>

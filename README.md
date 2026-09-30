@@ -81,7 +81,12 @@ Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) s
 - **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar e integrantes.
 - Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
 
-La configuración se guarda en el `localStorage` del navegador: aplica a ese navegador y se sincroniza con las pestañas abiertas. La pantalla está oculta, no protegida con contraseña. En Vercel esto lo resuelve `vercel.json` (redirige todas las rutas a `index.html`); en `npm run dev` y `npm run preview` ya funciona.
+Hay dos niveles:
+
+- **Configuración del proyecto** — [`src/config/config.json`](src/config/config.json). Es la que ven todos. Para cambiarla: ajustar en `/config`, tocar **Copiar JSON** (o **Descargar config.json**), reemplazar el archivo, commit y push; Vercel publica la versión nueva.
+- **Configuración local** — si alguien cambia algo en `/config`, se guarda solo en su navegador (`localStorage`), persiste aunque cierre el navegador y pisa la del proyecto únicamente para esa persona. **Volver a la del proyecto** la descarta.
+
+La pantalla está oculta, no protegida con contraseña: lo que cambie un visitante solo le afecta a él. En Vercel la ruta funciona gracias a `vercel.json` (redirige todas las rutas a `index.html`); en `npm run dev` y `npm run preview` ya funciona.
 
 ## Arquitectura
 
@@ -111,4 +116,4 @@ El selector, la validación, el paso a paso y el resaltado en el grafo funcionan
 
 ## Tests
 
-`npm test` corre 35 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, y los tres parsers con sus errores por línea la exportación ida y vuelta, y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
+`npm test` corre 39 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, y los tres parsers con sus errores por línea la exportación ida y vuelta, y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).

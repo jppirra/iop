@@ -1,0 +1,13 @@
+{
+  "estrategias": ["prim", "kruskal", "dijkstra"],
+  "pantallaInicio": true,
+  "pasoAPaso": true,
+  "leyenda": true,
+  "animaciones": true,
+  "historialPasos": true,
+  "ejemplosLibro": true,
+  "aleatorio": true,
+  "cargaMasiva": true,
+  "exportar": true,
+  "integrantes": true
+}
