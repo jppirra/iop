@@ -358,7 +358,7 @@ export default function App() {
                 {verPasoAPaso && config.leyenda && <Leyenda textos={estrategia.leyenda} />}
               </>
             ) : (
-              <BulkLoadPanel grafo={grafoEfectivo} mostrarExportar={config.exportar} onCargar={alCargar} />
+              <BulkLoadPanel grafo={grafoEfectivo} mostrarExportar={config.exportar} mostrarEjemplo={config.ejemploJson} onCargar={alCargar} />
             )}
           </div>
         </aside>

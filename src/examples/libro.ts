@@ -145,3 +145,6 @@ export const ejemplosLibro: EjemploLibro[] = [
     },
   },
 ]
+
+/** Archivo de ejemplo para la carga masiva: muestra el formato JSON con un grafo que sirve para todos los algoritmos. */
+export const EJEMPLO_JSON = JSON.stringify(ejemplosLibro.find((e) => e.id === 'leadville')!.grafo, null, 2)

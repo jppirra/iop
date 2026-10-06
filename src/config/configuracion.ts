@@ -16,6 +16,8 @@ export interface Configuracion {
   aleatorio: boolean
   cargaMasiva: boolean
   exportar: boolean
+  /** Enlace para descargar un JSON de ejemplo en Carga masiva. */
+  ejemploJson: boolean
   integrantes: boolean
   leyenda: boolean
 }
@@ -32,6 +34,7 @@ export const COMPONENTES: { clave: ComponenteConfigurable; titulo: string; descr
   { clave: 'aleatorio', titulo: 'Ejemplo aleatorio', descripcion: 'Botón "Aleatorio" y opción en la pantalla de inicio.' },
   { clave: 'cargaMasiva', titulo: 'Carga masiva', descripcion: 'Pestaña para pegar o subir texto, CSV o JSON.' },
   { clave: 'exportar', titulo: 'Exportar', descripcion: 'Botones para descargar el grafo en JSON o CSV (dentro de Carga masiva).', dependeDe: 'cargaMasiva' },
+  { clave: 'ejemploJson', titulo: 'JSON de ejemplo', descripcion: 'Enlace para descargar un archivo JSON de ejemplo, listo para editar y subir (dentro de Carga masiva).', dependeDe: 'cargaMasiva' },
   { clave: 'integrantes', titulo: 'Integrantes', descripcion: 'Botón con la lista de integrantes del grupo.' },
 ]
 
@@ -48,6 +51,7 @@ export function configPorDefecto(todas: Estrategia[]): Configuracion {
     aleatorio: true,
     cargaMasiva: true,
     exportar: true,
+    ejemploJson: true,
     integrantes: true,
     leyenda: true,
   }

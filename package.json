@@ -1,7 +1,7 @@
 {
   "name": "grupo3-iop-2026",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "cytoscape": "^3.34.3",
+    "marked": "^18.1.0",
     "react": "^19.3.0",
     "react-cytoscapejs": "^2.0.0",
     "react-dom": "^19.3.0"

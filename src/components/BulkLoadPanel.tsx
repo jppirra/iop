@@ -1,10 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
+import { EJEMPLO_JSON } from '../examples/libro'
 import { detectarFormato, exportarCsv, exportarJson, parsear, type Formato, type GrafoPlano } from '../parsers'
 import type { Grafo } from '../types/graph'
 
 interface Props {
   grafo: Grafo
   mostrarExportar: boolean
+  /** Enlace para descargar un JSON de ejemplo. */
+  mostrarEjemplo: boolean
   onCargar: (plano: GrafoPlano, modo: 'reemplazar' | 'agregar') => void
 }
 
@@ -25,7 +28,7 @@ function descargar(nombre: string, contenido: string, tipo: string) {
   URL.revokeObjectURL(url)
 }
 
-export function BulkLoadPanel({ grafo, mostrarExportar, onCargar }: Props) {
+export function BulkLoadPanel({ grafo, mostrarExportar, mostrarEjemplo, onCargar }: Props) {
   const [texto, setTexto] = useState('')
   const [formato, setFormato] = useState<Formato | 'auto'>('auto')
   const [archivo, setArchivo] = useState<string | undefined>()
@@ -94,6 +97,18 @@ export function BulkLoadPanel({ grafo, mostrarExportar, onCargar }: Props) {
         aria-label="Datos del grafo"
       />
       {archivo && <p className="text-xs text-slate-500">Archivo: {archivo}</p>}
+      {mostrarEjemplo && (
+        <p className="text-xs text-slate-500">
+          ¿No tenés un archivo?{' '}
+          <button
+            className="font-medium text-teal-700 underline decoration-teal-700/40 hover:text-teal-800"
+            onClick={() => descargar('grafo-ejemplo.json', EJEMPLO_JSON, 'application/json')}
+          >
+            Descargar JSON de ejemplo
+          </button>{' '}
+          para ver el formato, editarlo y subirlo.
+        </p>
+      )}
 
       {resultado && resultado.errores.length > 0 && (
         <div className="max-h-40 overflow-auto rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">

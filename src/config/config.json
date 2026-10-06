@@ -9,5 +9,6 @@
   "aleatorio": true,
   "cargaMasiva": true,
   "exportar": true,
+  "ejemploJson": true,
   "integrantes": true
 }

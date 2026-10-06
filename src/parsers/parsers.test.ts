@@ -86,3 +86,14 @@ describe('detección y exportación', () => {
     expect(csv.grafo!.aristas).toEqual(json.grafo!.aristas)
   })
 })
+
+describe('JSON de ejemplo para descargar', () => {
+  it('se puede volver a subir sin errores', async () => {
+    const { EJEMPLO_JSON } = await import('../examples/libro')
+    const { grafo, errores } = parsear(EJEMPLO_JSON, detectarFormato(EJEMPLO_JSON, 'grafo-ejemplo.json'))
+    expect(errores).toEqual([])
+    expect(grafo!.nodos).toHaveLength(7)
+    expect(grafo!.aristas).toHaveLength(11)
+    expect(grafo!.nodos[0]).toEqual({ nombre: '1', x: 90, y: 300 })
+  })
+})

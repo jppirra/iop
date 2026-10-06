@@ -1,7 +1,7 @@
 # Documento de entrega — TPI Modelos de red
 
 **Investigación Operativa · Ingeniería en Sistemas de Información · UTN**
-**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.000.004**
+**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.000.005**
 
 | Integrante | Legajo |
 | --- | --- |
@@ -60,7 +60,7 @@ Aplicación web que permite armar un grafo, elegir un algoritmo y ver el resulta
 
 - **Tecnología:** React + TypeScript, compilado con Vite. El grafo se dibuja con Cytoscape. No tiene servidor ni base de datos: todo corre en el navegador.
 - **Cómo ejecutarla:** `npm install` y `npm run dev` (abre en `http://localhost:5173`). Requiere Node 20 o superior. También se publica como sitio estático en Vercel.
-- **Tests:** `npm test` corre 50 tests automáticos.
+- **Tests:** `npm test` corre 51 tests automáticos.
 
 ---
 
@@ -118,6 +118,8 @@ Formato JSON:
   "aristas": [{ "origen": "1", "destino": "2", "peso": 8 }]
 }
 ```
+
+El enlace "Descargar JSON de ejemplo" baja un archivo con este formato, listo para editar y subir.
 
 Antes de cargar, la aplicación informa cuántos nodos y aristas detectó, y marca los errores **por línea** (peso no numérico, línea mal formada, arista repetida). Después se elige **Reemplazar grafo** o **Agregar al grafo**.
 
@@ -220,7 +222,7 @@ El recorrido línea por línea de cada uno está en el [MANUAL.md](MANUAL.md), s
 
 ### 4.6 ¿Cómo verificaron que los resultados obtenidos son correctos?
 
-Con 50 tests automáticos (`npm test`) y cuatro criterios:
+Con 51 tests automáticos (`npm test`) y cuatro criterios:
 
 1. **Casos con solución conocida.** Los tests reproducen los ejemplos del libro de la cátedra (Render, cap. 11) con el resultado y el orden de los pasos:
 

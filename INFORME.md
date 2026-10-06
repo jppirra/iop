@@ -12,7 +12,7 @@ Este comentario no se ve al exportar el documento.
 **Investigación Operativa · UTN · Grupo 3 — IOP 2026**
 Junco Paola (43516) · Hernandez Lucas Adriel (51895) · Moreno Pablo (51452) · Pirra Juan Pablo (54051) · Schneider Christian (52682) · Vanzo David (48463)
 
-Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.000.004
+Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.000.005
 
 ## 1. Algoritmos
 
@@ -113,7 +113,7 @@ Se eligieron dos listas porque es como se edita el grafo (agregar o quitar un el
 Estado actual:
 
 - **Desarrollado:** carga manual, carga masiva (texto, CSV, JSON) y aleatoria; edición y deshacer; dibujo del grafo dirigido o no dirigido; Prim, Kruskal, Dijkstra y Ford-Fulkerson con ejecución animada y paso a paso; tablas de resultados por algoritmo; avisos de empates, soluciones múltiples, grafo no conexo y datos inválidos; exportación.
-- **Verificado:** 50 tests automáticos. Reproducen los ejemplos del libro de la cátedra (Lauderdale = 16, Leadville = 32, Ray Design = 290) y la red del apunte de flujo máximo (18). También comprueban que Prim y Kruskal coincidan y que el flujo máximo sea igual al corte mínimo, incluso en grafos de 200 nodos.
+- **Verificado:** 51 tests automáticos. Reproducen los ejemplos del libro de la cátedra (Lauderdale = 16, Leadville = 32, Ray Design = 290) y la red del apunte de flujo máximo (18). También comprueban que Prim y Kruskal coincidan y que el flujo máximo sea igual al corte mínimo, incluso en grafos de 200 nodos.
 - **Publicado:** la aplicación está desplegada y el código está en el repositorio.
 - **Sin comenzar:** CPM y PERT.
 

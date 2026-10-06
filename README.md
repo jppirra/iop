@@ -1,8 +1,8 @@
 # Grupo 3 - IOP 2026
 
-Versión **v1.000.004**
+Versión **v1.000.005**
 
-> Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Informe de avance (4 páginas): [INFORME.md](INFORME.md). Detalle de cada modelo: [MANUAL.md](MANUAL.md).
+> Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Informe de avance (4 páginas): [INFORME.md](INFORME.md), que también se ve con el estilo de la app en `/informe`. Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
 App web educativa para probar los algoritmos de grafos del capítulo 11 "Modelos de redes" de Render (*Métodos cuantitativos para los negocios*). Permite armar un grafo visualmente o por carga masiva, ejecutar un algoritmo y ver el resultado paso a paso, con la explicación de cada decisión.
 
@@ -58,6 +58,7 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Los nodos se crean a partir de las aristas. Hasta 20 nodos se dibujan en círculo; con más, se acomodan solos (Auto-layout), así un grafo de 200 nodos se puede leer apenas se carga.
 - Los errores se informan por línea (peso no numérico, línea mal formada, arista repetida, etc.).
 - Se puede reemplazar el grafo o agregar al actual, y exportar el grafo a JSON o CSV.
+- "Descargar JSON de ejemplo" baja `grafo-ejemplo.json` (7 nodos, 11 aristas) para ver el formato, editarlo y subirlo.
 
 **Ejecución**
 
@@ -84,7 +85,7 @@ Las aristas de la fig. 11.1 que no forman parte del árbol (1–4, 3–5, 4–6,
 Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) se elige qué se muestra:
 
 - **Algoritmos disponibles**: Prim, Kruskal, Dijkstra y/o Ford-Fulkerson (al menos uno). Solo se ven los que figuran en `estrategias` de `config.json` (hoy los cuatro): un algoritmo nuevo queda oculto hasta sumar su id. Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
-- **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar e integrantes.
+- **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar, JSON de ejemplo e integrantes.
 - Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
 
 Hay dos niveles:
@@ -93,6 +94,10 @@ Hay dos niveles:
 - **Configuración local** — si alguien cambia algo en `/config`, se guarda solo en su navegador (`localStorage`), persiste aunque cierre el navegador y pisa la del proyecto únicamente para esa persona. **Volver a la del proyecto** la descarta.
 
 La pantalla está oculta, no protegida con contraseña: lo que cambie un visitante solo le afecta a él. En Vercel la ruta funciona gracias a `vercel.json` (redirige todas las rutas a `index.html`); en `npm run dev` y `npm run preview` ya funciona.
+
+## Informe (`/informe`)
+
+Entrando a `/informe` (sin enlace desde la app, igual que `/config`) se ve [INFORME.md](INFORME.md) con la paleta de la app. Para cambiar el contenido se edita el `.md` y se hace push; los comentarios `<!-- -->` del archivo no se muestran. **Descargar Word** baja el informe completo en un `.doc` editable y **Imprimir / PDF** lo saca en A4 (4 páginas).
 
 ## Arquitectura
 
@@ -105,6 +110,7 @@ src/
   lib/grafo.ts          Operaciones inmutables sobre el grafo (agregar, eliminar, fusionar…)
   examples/             Ejemplos del libro, integrantes y versión
   config/               Configuración (/config): modelo, persistencia y pantalla
+  informe/              Pantalla /informe: muestra INFORME.md con el estilo de la app
   hooks/useHistorial.ts Estado con historial para Deshacer
   components/           GraphCanvas, Toolbar, BulkLoadPanel, StrategySelector,
                         StepControls, ResultsPanel, DialogoEntrada, IntegrantesDialog
@@ -123,4 +129,4 @@ El selector, la validación, el paso a paso y el resaltado en el grafo funcionan
 
 ## Tests
 
-`npm test` corre 50 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, Ford-Fulkerson (red del apunte = 18, corte mínimo igual al flujo máximo, arcos inversos, conservación en los nodos, grafos no dirigidos, capacidades decimales), y los tres parsers con sus errores por línea la exportación ida y vuelta, grafos de 200 nodos (Prim = Kruskal, flujo máximo = corte mínimo), y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
+`npm test` corre 51 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, Ford-Fulkerson (red del apunte = 18, corte mínimo igual al flujo máximo, arcos inversos, conservación en los nodos, grafos no dirigidos, capacidades decimales), y los tres parsers con sus errores por línea la exportación ida y vuelta, grafos de 200 nodos (Prim = Kruskal, flujo máximo = corte mínimo), y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).

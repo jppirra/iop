@@ -715,7 +715,7 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 
 ## 9. Tests que respaldan cada afirmación
 
-`npm test` corre 50 tests (todos pasan). Los de algoritmos están en [algoritmos.test.ts](src/algorithms/algoritmos.test.ts):
+`npm test` corre 51 tests (todos pasan). Los de algoritmos están en [algoritmos.test.ts](src/algorithms/algoritmos.test.ts):
 
 | Qué se afirma | Test |
 | --- | --- |
