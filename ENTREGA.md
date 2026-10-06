@@ -1,7 +1,7 @@
 # Documento de entrega — TPI Modelos de red
 
 **Investigación Operativa · Ingeniería en Sistemas de Información · UTN**
-**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.000.003**
+**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.000.004**
 
 | Integrante | Legajo |
 | --- | --- |
@@ -48,7 +48,7 @@ Este documento responde a la consigna "Desarrollo de una aplicación para algori
 | Prim | Implementado | Árbol de expansión mínima desde un nodo inicial. |
 | Kruskal | Implementado | Árbol de expansión mínima ordenando aristas. |
 | Dijkstra | Implementado | Ruta más corta entre origen y destino. |
-| Flujo máximo (Ford-Fulkerson) | Implementado, **oculto por configuración** | Funciona y está testeado, pero no figura en `src/config/config.json`. Hay que habilitarlo antes de la demostración (ver [sección 7](#7-pendientes-antes-de-la-entrega)). |
+| Flujo máximo (Ford-Fulkerson) | Implementado | Flujo máximo de una fuente a un sumidero, con el corte mínimo. |
 | CPM | **No implementado** | Pendiente. |
 | PERT | **No implementado** | Pendiente. |
 
@@ -70,8 +70,8 @@ La consigna pide cinco cosas durante la demostración. Esta sección indica cóm
 
 ### 3.1 Antes de empezar
 
-1. Habilitar Flujo máximo (ver [sección 7](#7-pendientes-antes-de-la-entrega)).
-2. Abrir la aplicación. En la pantalla de inicio se elige el algoritmo y el modo de carga.
+1. Abrir la aplicación. En la pantalla de inicio se elige el algoritmo y el modo de carga.
+2. Si se quiere mostrar solo una parte, entrar a `/config` y apagar los algoritmos o componentes que no se van a usar (vale solo para ese navegador).
 3. Tener a mano un archivo de texto para pegar los grafos que entreguen las docentes.
 
 ### 3.2 Cargar un grafo entregado por las docentes
@@ -294,9 +294,8 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 ## 7. Pendientes antes de la entrega
 
 1. **Implementar CPM y PERT.** La consigna los pide y hoy no existen en la aplicación. Son los dos algoritmos que faltan para cumplir el requerimiento completo.
-2. **Habilitar Flujo máximo para todos.** Agregar `"ford-fulkerson"` a la lista `estrategias` de [src/config/config.json](src/config/config.json) y publicar. Mientras tanto se puede habilitar en un navegador puntual entrando a `/config`.
-3. **Actualizar la carpeta [docs/](docs/).** Describe solo Prim y Kruskal; no menciona Dijkstra ni Flujo máximo.
-4. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
+2. **Actualizar la carpeta [docs/](docs/).** Describe solo Prim y Kruskal; no menciona Dijkstra ni Flujo máximo.
+3. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
 
 ---
 

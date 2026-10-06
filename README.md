@@ -1,6 +1,6 @@
 # Grupo 3 - IOP 2026
 
-Versión **v1.000.003**
+Versión **v1.000.004**
 
 > Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
@@ -39,7 +39,7 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Árbol mínimo - Prim: se elige el nodo inicial.
 - Árbol mínimo - Kruskal.
 - Ruta más corta - Dijkstra: se eligen origen y destino.
-- Flujo máximo - Ford-Fulkerson: se eligen fuente (S) y sumidero (T); el peso de cada arco es su capacidad. Oculto por defecto: se habilita en `/config` (ver más abajo).
+- Flujo máximo - Ford-Fulkerson: se eligen fuente (S) y sumidero (T); el peso de cada arco es su capacidad.
 
 **Edición del grafo**
 
@@ -83,7 +83,7 @@ Las aristas de la fig. 11.1 que no forman parte del árbol (1–4, 3–5, 4–6,
 
 Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) se elige qué se muestra:
 
-- **Algoritmos disponibles**: Prim, Kruskal, Dijkstra y/o Ford-Fulkerson (al menos uno). Solo se ven los que figuran en `estrategias` de `config.json`: un algoritmo nuevo queda oculto hasta sumar su id (hoy Ford-Fulkerson, `ford-fulkerson`). Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
+- **Algoritmos disponibles**: Prim, Kruskal, Dijkstra y/o Ford-Fulkerson (al menos uno). Solo se ven los que figuran en `estrategias` de `config.json` (hoy los cuatro): un algoritmo nuevo queda oculto hasta sumar su id. Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
 - **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar e integrantes.
 - Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
 

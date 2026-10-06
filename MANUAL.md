@@ -106,7 +106,7 @@ Cada modelo exporta un objeto `estrategia` ([graph.ts:151-165](src/types/graph.t
 
 El registro es automático: [index.ts](src/algorithms/index.ts) usa `import.meta.glob` para tomar todo archivo de `src/algorithms/` que exporte `estrategia`. No hay una lista escrita a mano.
 
-Que esté registrado no significa que se vea: solo se muestran las estrategias cuyo `id` figura en `estrategias` de [config.json](src/config/config.json). Ford-Fulkerson está registrado pero **no figura ahí**, así que queda oculto hasta habilitarlo en `/config` (ver [sección 8.2](#82-configuración-config-y-configjson)).
+Que esté registrado no significa que se vea: solo se muestran las estrategias cuyo `id` figura en `estrategias` de [config.json](src/config/config.json). Hoy figuran los cuatro modelos; para ocultar uno se lo saca de esa lista o se lo apaga en `/config` (ver [sección 8.2](#82-configuración-config-y-configjson)).
 
 ### 2.3 Qué hace `App` antes de llamar al algoritmo
 
@@ -461,8 +461,6 @@ Dos momentos para señalar al explicar: en la iteración 2 el nodo 3 **mejora** 
 
 ## 6. Modelo 4: Flujo máximo — Ford-Fulkerson
 
-> **Oculto por defecto.** Este modelo no figura en `config.json`: para verlo hay que habilitarlo en `/config` (vale solo en ese navegador) o sumar `"ford-fulkerson"` a `estrategias` en [config.json](src/config/config.json) para que lo vean todos.
-
 ### 6.1 Nivel funcional
 
 **Problema.** Dada una red donde cada arco tiene una **capacidad** (lo máximo que puede transportar), encontrar cuánto se puede enviar como máximo desde un nodo **fuente (S)** hasta un nodo **sumidero (T)**. Caso del apunte: una red de transmisión de datos, en Mbps.
@@ -686,9 +684,9 @@ Otros comportamientos:
 | Cambio | Efecto |
 | --- | --- |
 | Sacar una estrategia de `estrategias` | Desaparece del selector, de la pantalla de inicio y sus ejemplos del libro. |
-| Un algoritmo registrado que **no figura** en `estrategias` de `config.json` | Queda oculto para todos. Es el caso actual de Ford-Fulkerson (`ford-fulkerson`). |
-| Habilitar Ford-Fulkerson en `/config` | Lo ve solo ese navegador (configuración local). Aparecen la estrategia, su tarjeta en la pantalla de inicio y el ejemplo "Red de transmisión". |
-| Sumar `"ford-fulkerson"` a `estrategias` en `config.json` y hacer push | Lo ven todos. |
+| Un algoritmo registrado que **no figura** en `estrategias` de `config.json` | Queda oculto para todos. Hoy figuran los cuatro. |
+| Apagar un algoritmo en `/config` | Deja de verlo solo ese navegador (configuración local). Desaparecen la estrategia, su tarjeta en la pantalla de inicio y sus ejemplos. |
+| Sacar un id de `estrategias` en `config.json` y hacer push | Deja de verse para todos. |
 | Dejar solo Prim y/o Kruskal | Se oculta "Dirigido / No dirigido" y todo grafo se trata como no dirigido. |
 | `animaciones: false` | Ejecutar salta directo al resultado; sin transiciones de color. |
 | `pasoAPaso: false` | Sin botón Paso a paso, sin controles y sin leyenda. |
@@ -768,7 +766,7 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 
 **¿Cómo se agrega otro modelo?** Un archivo nuevo en `src/algorithms/` que exporte `estrategia`; el registro es automático. Así se agregó flujo máximo. Queda oculto hasta sumar su `id` a `config.json`.
 
-**¿Por qué no veo Ford-Fulkerson en la app?** Porque no figura en `config.json`. Se habilita en `/config` (solo para ese navegador) o agregando `"ford-fulkerson"` a `estrategias`.
+**¿Por qué no veo un algoritmo en la app?** Porque está apagado en `/config` de ese navegador o no figura en `estrategias` de `config.json`. En la configuración del proyecto están habilitados los cuatro.
 
 **¿Qué es un camino de aumento?** Un camino de la fuente al sumidero por el que todavía cabe flujo. Lo que se puede enviar por él es su cuello de botella: la menor capacidad residual de sus tramos.
 

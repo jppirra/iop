@@ -1,5 +1,5 @@
 {
-  "estrategias": ["prim", "kruskal", "dijkstra"],
+  "estrategias": ["prim", "kruskal", "dijkstra", "ford-fulkerson"],
   "pantallaInicio": true,
   "pasoAPaso": true,
   "leyenda": true,

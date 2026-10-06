@@ -10,4 +10,4 @@ export const integrantes = [
   { nombre: 'Vanzo David', legajo: '48463' },
 ]
 
-export const VERSION = 'v1.000.003'
+export const VERSION = 'v1.000.004'
