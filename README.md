@@ -2,7 +2,7 @@
 
 Versión **v1.000.004**
 
-> Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Detalle de cada modelo: [MANUAL.md](MANUAL.md).
+> Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Informe de avance (4 páginas): [INFORME.md](INFORME.md). Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
 App web educativa para probar los algoritmos de grafos del capítulo 11 "Modelos de redes" de Render (*Métodos cuantitativos para los negocios*). Permite armar un grafo visualmente o por carga masiva, ejecutar un algoritmo y ver el resultado paso a paso, con la explicación de cada decisión.
 
