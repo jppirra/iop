@@ -41,6 +41,65 @@ src/
   main.tsx                Punto de entrada de la aplicación
 ```
 
+## Representación interna del grafo
+
+El grafo **no** se guarda como lista de adyacencia: se guarda como dos arrays
+planos, en `src/types/graph.ts`:
+
+```ts
+interface Nodo {
+  id: string      // identificador interno, no lo ve la persona usuaria
+  nombre: string   // lo que se muestra y se edita (único dentro del grafo)
+  x: number
+  y: number        // posición en el lienzo
+}
+
+interface Arista {
+  id: string
+  origen: string   // id de un Nodo
+  destino: string  // id de un Nodo
+  peso: number
+}
+
+interface Grafo {
+  dirigido: boolean
+  nodos: Nodo[]
+  aristas: Arista[]
+}
+```
+
+**Por qué arrays y no adyacencia directamente:** este formato es el que mejor
+calza con cómo se edita el grafo desde la interfaz (agregar/quitar un nodo o
+una arista es un `push`/`filter` sobre un array) y con cómo se serializa a
+JSON/CSV para exportar e importar. Las funciones de `lib/grafo.ts` son
+**inmutables**: cada operación (`agregarNodo`, `agregarArista`, `eliminar`,
+`renombrarNodo`...) devuelve un `Grafo` nuevo en vez de mutar el existente, lo
+que es lo que permite implementar Deshacer (Ctrl+Z) simplemente apilando
+estados anteriores.
+
+Cuando un algoritmo necesita recorrer el grafo (quién es vecino de quién), esa
+representación por adyacencia se arma **al vuelo**, no se mantiene
+persistente: `listaAdyacencia(grafo)` en `algorithms/utils.ts` recorre el
+array de aristas una vez y arma un `Map<idNodo, Vecino[]>`. Se vuelve a
+calcular cada vez que se ejecuta un algoritmo, porque el grafo es chico y
+recalcular es más simple que mantener dos estructuras sincronizadas.
+
+### Cómo se identifican nodos y conexiones
+
+- Cada nodo y cada arista tiene un **id interno** generado con `nuevoId()`
+  (`lib/grafo.ts`): un prefijo (`n` para nodo, `e` para arista) más un
+  timestamp en base36 más un contador, por ejemplo `n8mz3k1`. Estos ids nunca
+  se muestran ni se editan.
+- Las aristas referencian nodos **por id** (`origen`, `destino`), no por
+  nombre, así renombrar un nodo no requiere tocar ninguna arista.
+- El **nombre** del nodo es lo único que define y edita la persona usuaria
+  (`1`, `A`, `Casa 1`...). Se valida que no se repita dentro del mismo grafo
+  antes de crear o renombrar un nodo (`App.tsx`, función `nombreValido`).
+- Al cargar un grafo por texto/CSV/JSON, los nodos no se declaran aparte: se
+  deducen de los nombres que aparecen en las aristas (`completarNodos` en
+  `parsers/tipos.ts`), y recién ahí se les asigna un id real al convertirlos
+  con `desdePlano`.
+
 ## Flujo de datos (alto nivel)
 
 ```
@@ -125,3 +184,65 @@ de "reemplazar".
 pila de estados anteriores para poder deshacer con Ctrl+Z. `App.tsx` lo usa
 sobre el `Grafo` completo: cada edición (agregar nodo, conectar, eliminar,
 mover) pasa por `aplicar(fn)`, que calcula el nuevo estado y lo apila.
+
+## Cómo se verifica la corrección de los resultados
+
+Los algoritmos son funciones puras (`Grafo` + parámetros → resultado), lo que
+los hace fáciles de probar sin levantar la interfaz: `npm test` corre una
+batería de tests con Vitest sobre `algorithms/`, `lib/` y `parsers/`. La
+estrategia de verificación tiene tres patas:
+
+1. **Comparación contra un caso resuelto a mano.** El ejemplo "Lauderdale
+   Construction" (8 nodos) tiene una solución conocida de antemano, con el
+   árbol y la distancia total ya calculados. Los tests comprueban que:
+   - Prim, empezando desde el nodo 1, reproduce exactamente esa secuencia de
+     aristas y llega a distancia total 16.
+   - **Prim da el mismo resultado (16) sin importar desde qué nodo arranque** —
+     esto verifica una propiedad matemática del algoritmo (el árbol mínimo no
+     depende del nodo inicial), no solo un caso puntual.
+   - Kruskal, sobre el mismo grafo, también llega a 16 por un camino distinto
+     — si Prim y Kruskal coinciden en la distancia total, es una señal fuerte
+     de que ambas implementaciones son correctas (se corrigen "entre sí").
+2. **Casos borde armados a propósito**, probados con grafos chicos escritos a
+   mano (formato texto): un grafo no conexo (verifica que se detecte y que se
+   informen los nodos sin conectar), un grafo con un ciclo evidente (verifica
+   que Kruskal lo descarte y lo diga en la descripción del paso), un árbol sin
+   ambigüedad (verifica que **no** se marque como solución múltiple cuando no
+   la hay, para descartar falsos positivos).
+3. **Propiedades generales sobre entradas aleatorias**: el generador de
+   grafos aleatorios se corre con 50 semillas distintas y se verifica, en
+   cada una, que el grafo resultante sea conexo, sin aristas repetidas y con
+   todos los pesos dentro del rango pedido — en vez de revisar un grafo
+   aleatorio a mano, se verifica que la propiedad se cumpla siempre.
+
+Los parsers (texto/CSV/JSON) se prueban por separado: que conviertan
+correctamente una entrada válida, y que informen el error esperado (línea y
+mensaje) ante cada tipo de entrada inválida (peso no numérico, línea mal
+formada, arista repetida, encabezado de CSV inválido).
+
+## Aspectos técnicos no triviales de la implementación
+
+Algunos puntos del diseño no son obvios a primera vista y vale la pena poder
+explicarlos:
+
+- **Determinismo en los empates.** Cuando dos aristas tienen el mismo peso,
+  tanto Prim como Kruskal necesitan un criterio de desempate reproducible (se
+  usa el orden en que se cargó el grafo) — si el desempate fuera arbitrario
+  en cada corrida, el mismo grafo podría dar árboles distintos en
+  ejecuciones distintas, y los tests no podrían fijar un resultado esperado.
+- **Detectar cuándo hay más de un árbol óptimo**, no solo cuándo hubo un
+  empate durante la ejecución: un empate en un paso no siempre significa que
+  exista otro árbol con la misma distancia total (a veces la arista alternativa
+  igual no sirve). `reemplazosEquivalentes` (`algorithms/utils.ts`) lo resuelve
+  comparando, para cada arista fuera del árbol, el peso de la arista más cara
+  en el camino que conecta sus extremos dentro del árbol.
+- **Mantener la ejecución sincronizada con el grafo.** Si se edita el grafo
+  después de ejecutar un algoritmo, el resultado mostrado quedaría
+  desactualizado. Se resuelve comparando una firma del grafo (ids, nombres,
+  conexiones y pesos, ignorando la posición de los nodos) contra la firma
+  vigente al momento de ejecutar, sin tener que recalcular el resultado en
+  cada tecla.
+- **Tres formatos de entrada, un solo modelo de error.** Texto, CSV y JSON
+  tienen reglas de parseo distintas, pero todos informan los errores con la
+  misma forma (`{ ubicación, mensaje }`) para que la interfaz los muestre
+  igual sin importar qué formato se usó.
