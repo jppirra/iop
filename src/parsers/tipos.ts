@@ -9,6 +9,9 @@ export interface AristaPlana {
   origen: string
   destino: string
   peso: number
+  /** PERT: tiempos optimista y pesimista (el peso es el más probable). */
+  optimista?: number
+  pesimista?: number
 }
 
 export interface GrafoPlano {
@@ -37,6 +40,27 @@ export function leerPeso(valor: string, comaDecimal: boolean): number | null {
   const normalizado = comaDecimal ? limpio.replace(',', '.') : limpio
   if (!/^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/.test(normalizado)) return null
   return Number(normalizado)
+}
+
+export interface Tiempos {
+  peso: number
+  optimista?: number
+  pesimista?: number
+}
+
+/**
+ * Lee el peso de una arista. Acepta un solo número, o los tres tiempos de PERT
+ * "optimista más probable pesimista" (el peso es el más probable). Devuelve un mensaje si no es válido.
+ */
+export function leerTiempos(valores: string[], comaDecimal: boolean): Tiempos | string {
+  const numeros = valores.map((v) => leerPeso(v, comaDecimal))
+  const malo = numeros.indexOf(null)
+  if (malo !== -1) return `Peso no numérico: "${valores[malo]}".`
+  if (numeros.length === 1) return { peso: numeros[0]! }
+  const [optimista, peso, pesimista] = numeros as number[]
+  if (optimista > peso || peso > pesimista)
+    return `Los tiempos tienen que cumplir optimista ≤ más probable ≤ pesimista (hay ${valores.join(', ')}).`
+  return { peso, optimista, pesimista }
 }
 
 /** Arma la lista de nodos (en orden de aparición) y valida duplicados. */

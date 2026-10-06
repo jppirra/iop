@@ -20,6 +20,30 @@ export interface EjemploLibro {
  * Leadville: todas las distancias salen de la figura 11.19 y la solución 11-3.
  * El orden de las aristas define cómo se rompen los empates (igual que en el libro).
  */
+/**
+ * General Foundry (cap. 12 "Administración de proyectos"): actividades A a H como arcos entre eventos.
+ * A 1→2, B 1→3, C 2→4, D 3→5, E 4→5, F 4→6, G 5→6, H 6→7. `esperado` = (a + 4m + b) / 6.
+ */
+const EVENTOS_FOUNDRY = [
+  { nombre: '1', x: 80, y: 300 },
+  { nombre: '2', x: 240, y: 160 },
+  { nombre: '3', x: 240, y: 440 },
+  { nombre: '4', x: 420, y: 160 },
+  { nombre: '5', x: 420, y: 440 },
+  { nombre: '6', x: 600, y: 300 },
+  { nombre: '7', x: 760, y: 300 },
+]
+const ACTIVIDADES_FOUNDRY = [
+  { origen: '1', destino: '2', a: 1, m: 2, b: 3, esperado: 2 }, // A
+  { origen: '1', destino: '3', a: 2, m: 3, b: 4, esperado: 3 }, // B
+  { origen: '2', destino: '4', a: 1, m: 2, b: 3, esperado: 2 }, // C
+  { origen: '3', destino: '5', a: 2, m: 4, b: 6, esperado: 4 }, // D
+  { origen: '4', destino: '5', a: 1, m: 4, b: 7, esperado: 4 }, // E
+  { origen: '4', destino: '6', a: 1, m: 2, b: 9, esperado: 3 }, // F
+  { origen: '5', destino: '6', a: 3, m: 4, b: 11, esperado: 5 }, // G
+  { origen: '6', destino: '7', a: 1, m: 2, b: 3, esperado: 2 }, // H
+]
+
 export const ejemplosLibro: EjemploLibro[] = [
   {
     id: 'lauderdale',
@@ -142,6 +166,33 @@ export const ejemplosLibro: EjemploLibro[] = [
         { origen: 'S', destino: 'B', peso: 10 },
         { origen: 'B', destino: 'T', peso: 10 },
       ],
+    },
+  },
+  {
+    id: 'general-foundry-cpm',
+    titulo: 'General Foundry (CPM)',
+    referencia: 'Render, cap. 12 · 8 actividades',
+    descripcion: 'Proyecto de 8 actividades (A a H) con duración fija, en semanas. Resultado: 15 semanas, ruta crítica A-C-E-G-H (1-2-4-5-6-7).',
+    estrategia: 'cpm',
+    parametros: {},
+    grafo: {
+      dirigido: true,
+      nodos: EVENTOS_FOUNDRY,
+      aristas: ACTIVIDADES_FOUNDRY.map(({ origen, destino, esperado }) => ({ origen, destino, peso: esperado })),
+    },
+  },
+  {
+    id: 'general-foundry-pert',
+    titulo: 'General Foundry (PERT)',
+    referencia: 'Render, cap. 12 · 8 actividades',
+    descripcion:
+      'El mismo proyecto con tiempos optimista, más probable y pesimista. Resultado: 15 semanas esperadas, varianza 3,11; probabilidad de terminar en 16 semanas: 71,5 % (el libro redondea Z a 0,57 y da 71,6 %).',
+    estrategia: 'pert',
+    parametros: {},
+    grafo: {
+      dirigido: true,
+      nodos: EVENTOS_FOUNDRY,
+      aristas: ACTIVIDADES_FOUNDRY.map(({ origen, destino, a, m, b }) => ({ origen, destino, peso: m, optimista: a, pesimista: b })),
     },
   },
 ]

@@ -1,4 +1,4 @@
-import type { GrafoPlano } from '../parsers'
+import type { GrafoPlano, Tiempos } from '../parsers'
 import type { Arista, Grafo, Nodo } from '../types/graph'
 
 let contador = 0
@@ -42,8 +42,9 @@ export function desdePlano(plano: GrafoPlano, dirigido: boolean, base?: Grafo): 
     const origen = porNombre.get(a.origen)!.id
     const destino = porNombre.get(a.destino)!.id
     const existente = aristas.findIndex((e) => mismaConexion(e, origen, destino, dirigido))
-    if (existente >= 0) aristas[existente] = { ...aristas[existente], peso: a.peso }
-    else aristas.push({ id: nuevoId('e'), origen, destino, peso: a.peso })
+    const tiempos = { peso: a.peso, optimista: a.optimista, pesimista: a.pesimista }
+    if (existente >= 0) aristas[existente] = { ...aristas[existente], ...tiempos }
+    else aristas.push({ id: nuevoId('e'), origen, destino, ...tiempos })
   }
   return { dirigido, nodos, aristas }
 }
@@ -68,12 +69,20 @@ export function moverNodos(grafo: Grafo, posiciones: Record<string, { x: number;
   return { ...grafo, nodos: grafo.nodos.map((n) => (posiciones[n.id] ? { ...n, ...posiciones[n.id] } : n)) }
 }
 
-export function agregarArista(grafo: Grafo, origen: string, destino: string, peso: number): Grafo {
-  return { ...grafo, aristas: [...grafo.aristas, { id: nuevoId('e'), origen, destino, peso }] }
+/** `tiempos` lleva el peso y, para PERT, los tiempos optimista y pesimista. */
+export function agregarArista(grafo: Grafo, origen: string, destino: string, tiempos: Tiempos): Grafo {
+  return { ...grafo, aristas: [...grafo.aristas, { id: nuevoId('e'), origen, destino, ...tiempos }] }
 }
 
-export function editarPeso(grafo: Grafo, id: string, peso: number): Grafo {
-  return { ...grafo, aristas: grafo.aristas.map((a) => (a.id === id ? { ...a, peso } : a)) }
+/** Reemplaza el peso; si `tiempos` no trae optimista y pesimista, la arista los pierde. */
+export function editarPeso(grafo: Grafo, id: string, tiempos: Tiempos): Grafo {
+  const { peso, optimista, pesimista } = tiempos
+  return { ...grafo, aristas: grafo.aristas.map((a) => (a.id === id ? { ...a, peso, optimista, pesimista } : a)) }
+}
+
+/** Texto de una arista para el lienzo y los diálogos: el peso, o "optimista / más probable / pesimista". */
+export function textoPeso(a: Tiempos, separador = ' / '): string {
+  return a.optimista !== undefined && a.pesimista !== undefined ? [a.optimista, a.peso, a.pesimista].join(separador) : String(a.peso)
 }
 
 export function eliminar(grafo: Grafo, nodos: string[], aristas: string[]): Grafo {
@@ -102,6 +111,6 @@ export function firmaEstructural(grafo: Grafo): string {
   return JSON.stringify([
     grafo.dirigido,
     grafo.nodos.map((n) => [n.id, n.nombre]),
-    grafo.aristas.map((a) => [a.id, a.origen, a.destino, a.peso]),
+    grafo.aristas.map((a) => [a.id, a.origen, a.destino, a.peso, a.optimista, a.pesimista]),
   ])
 }

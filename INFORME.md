@@ -1,7 +1,7 @@
 <!--
 BORRADOR PARA EDITAR ENTRE TODOS. Límite: 4 páginas.
 Revisar antes de entregar:
-- Sección 1: la convención de CPM/PERT (actividad en el nodo o en el arco) tiene que ser la que se vio en clase.
+- Sección 1: CPM y PERT se implementaron con actividad en el arco; confirmar que es la convención que se vio en clase.
 - Sección 4: las alternativas descartadas son las técnicamente razonables; ajustar a lo que el grupo realmente comparó.
 - Sección 7: ordenar los pendientes según las clases que quedan y poner responsables.
 Este comentario no se ve al exportar el documento.
@@ -12,11 +12,11 @@ Este comentario no se ve al exportar el documento.
 **Investigación Operativa · UTN · Grupo 3 — IOP 2026**
 Junco Paola (43516) · Hernandez Lucas Adriel (51895) · Moreno Pablo (51452) · Pirra Juan Pablo (54051) · Schneider Christian (52682) · Vanzo David (48463)
 
-Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.000.005
+Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.000.006
 
 ## 1. Algoritmos
 
-Los algoritmos a implementar son los seis de la consigna. Cuatro ya funcionan en la aplicación.
+Los algoritmos a implementar son los seis de la consigna. Los seis ya funcionan en la aplicación.
 
 | Algoritmo | Problema que resuelve | Qué hace | Estado |
 | --- | --- | --- | --- |
@@ -24,8 +24,8 @@ Los algoritmos a implementar son los seis de la consigna. Cuatro ya funcionan en
 | Kruskal | Árbol de expansión mínima | Ordena las aristas de menor a mayor y agrega las que no forman ciclo. | Implementado |
 | Dijkstra | Ruta más corta | Fija en cada iteración el nodo más cercano al origen y actualiza las distancias de sus vecinos. | Implementado |
 | Ford-Fulkerson | Flujo máximo | Envía flujo por caminos de la fuente al sumidero hasta que no queda ninguno con capacidad. | Implementado |
-| CPM | Duración de un proyecto | Calcula tiempos más tempranos y más tardíos de cada actividad, las holguras y la ruta crítica. | Pendiente |
-| PERT | Duración con incertidumbre | Igual que CPM, pero cada actividad tiene tres tiempos estimados; da la duración esperada y su probabilidad. | Pendiente |
+| CPM | Duración de un proyecto | Calcula tiempos más tempranos y más tardíos de cada actividad, las holguras y la ruta crítica. | Implementado |
+| PERT | Duración con incertidumbre | Igual que CPM, pero cada actividad tiene tres tiempos estimados; da la duración esperada y la probabilidad de cumplir un plazo. | Implementado |
 
 **Diferencias entre ellos.**
 
@@ -41,7 +41,8 @@ Los algoritmos a implementar son los seis de la consigna. Cuatro ya funcionan en
 - Prim y Kruskal tratan todo grafo como **no dirigido**. Si el grafo no es conexo, devuelven el árbol parcial y avisan qué nodos quedaron afuera.
 - Dijkstra se detiene al fijar el destino y **bloquea los pesos negativos** antes de ejecutar.
 - En Ford-Fulkerson el camino se busca **en anchura (BFS)**, lo que garantiza que termine. Además se informa el **corte mínimo** y se admite grafo no dirigido.
-- CPM y PERT van a requerir que cada actividad tenga duración y precedencias; PERT necesita **tres valores por actividad**, que el modelo actual (un peso por arista) todavía no contempla.
+- En CPM y PERT cada **actividad es un arco** y cada nodo un evento, así se cargan como cualquier otro grafo. El inicio y el fin del proyecto se deducen de la red, y se detectan los ciclos antes de ejecutar.
+- Para PERT la arista admite **tres tiempos** (optimista, más probable y pesimista), y el plazo para calcular la probabilidad se ingresa sobre el resultado, sin volver a ejecutar.
 
 ## 2. Ingreso de datos
 
@@ -51,7 +52,7 @@ El usuario puede cargar el grafo de tres formas:
 - **Carga masiva**, pegando texto o subiendo un archivo. Pensada para grafos grandes (se probó con 200 nodos).
 - **Grafo aleatorio**, para probar rápido.
 
-La información que hay que dar es, por cada conexión: **nodo origen, nodo destino y peso** (distancia, costo o capacidad). Los nodos no se declaran aparte: se deducen de las conexiones. Además se indica si el grafo es dirigido y, según el algoritmo, el nodo inicial o el par origen–destino.
+La información que hay que dar es, por cada conexión: **nodo origen, nodo destino y peso** (distancia, costo, capacidad o duración). Para PERT el peso se reemplaza por tres tiempos: optimista, más probable y pesimista. Los nodos no se declaran aparte: se deducen de las conexiones. Además se indica si el grafo es dirigido y, según el algoritmo, el nodo inicial o el par origen–destino.
 
 Formatos aceptados en la carga masiva:
 
@@ -81,6 +82,7 @@ Para ejecutar, cada algoritmo arma en el momento la estructura que necesita a pa
 | Conjunto de nodos procesados | Prim, Dijkstra | Saber si un nodo ya fue conectado o fijado. |
 | Mapas de distancia y nodo previo | Dijkstra | Etiquetas de cada nodo y reconstrucción de la ruta. |
 | Mapa de flujo por arista | Ford-Fulkerson | Calcular la capacidad residual. |
+| Orden topológico de los eventos | CPM, PERT | Calcular cada evento después de los que lo preceden y detectar ciclos. |
 
 Se eligieron dos listas porque es como se edita el grafo (agregar o quitar un elemento) y como se guarda en un archivo. Mantener una sola estructura evita que dos representaciones queden desincronizadas.
 
@@ -112,20 +114,18 @@ Se eligieron dos listas porque es como se edita el grafo (agregar o quitar un el
 
 Estado actual:
 
-- **Desarrollado:** carga manual, carga masiva (texto, CSV, JSON) y aleatoria; edición y deshacer; dibujo del grafo dirigido o no dirigido; Prim, Kruskal, Dijkstra y Ford-Fulkerson con ejecución animada y paso a paso; tablas de resultados por algoritmo; avisos de empates, soluciones múltiples, grafo no conexo y datos inválidos; exportación.
-- **Verificado:** 51 tests automáticos. Reproducen los ejemplos del libro de la cátedra (Lauderdale = 16, Leadville = 32, Ray Design = 290) y la red del apunte de flujo máximo (18). También comprueban que Prim y Kruskal coincidan y que el flujo máximo sea igual al corte mínimo, incluso en grafos de 200 nodos.
+- **Desarrollado:** carga manual, carga masiva (texto, CSV, JSON) y aleatoria; edición y deshacer; dibujo del grafo dirigido o no dirigido; los seis algoritmos (Prim, Kruskal, Dijkstra, Ford-Fulkerson, CPM y PERT) con ejecución animada y paso a paso; tablas de resultados por algoritmo; avisos de empates, soluciones múltiples, grafo no conexo y datos inválidos; exportación.
+- **Verificado:** 66 tests automáticos. Reproducen los ejemplos del libro de la cátedra (Lauderdale = 16, Leadville = 32, Ray Design = 290, General Foundry = 15 semanas con sus holguras y probabilidad) y la red del apunte de flujo máximo (18). También comprueban que Prim y Kruskal coincidan y que el flujo máximo sea igual al corte mínimo, incluso en grafos de 200 nodos.
 - **Publicado:** la aplicación está desplegada y el código está en el repositorio.
-- **Sin comenzar:** CPM y PERT.
+- **Sin comenzar:** nada de lo pedido en la consigna.
 
-Para CPM y PERT se va a seguir el mismo esquema que los cuatro anteriores: una función por algoritmo que devuelve pasos y resultado, más su tabla de resultados. Lo nuevo es el modelo de datos de las actividades.
+CPM y PERT siguen el mismo esquema que los cuatro anteriores (una función que devuelve pasos y resultado, más su tabla) y comparten el cálculo de la red: solo cambia cómo se obtiene la duración de cada actividad.
 
 ## 7. Pasos pendientes para futuras clases
 
-1. Definir cómo se representa la red de actividades (actividad en el nodo o en el arco, según lo visto en clase).
-2. Extender la carga de datos para actividades: nombre, duración y precedencias; para PERT, los tres tiempos estimados.
-3. Implementar CPM: tiempos más tempranos y más tardíos, holguras y ruta crítica.
-4. Implementar PERT: tiempo esperado y varianza por actividad, duración esperada del proyecto y probabilidad de terminar en un plazo dado.
-5. Agregar las tablas de resultados y el resaltado de la ruta crítica sobre el grafo.
-6. Escribir los tests de CPM y PERT con ejemplos resueltos de la cátedra.
-7. Actualizar la documentación técnica (carpeta `docs/`) con Dijkstra, flujo máximo, CPM y PERT.
-8. Ensayar la demostración con grafos nuevos y con cambios de datos en vivo.
+1. Confirmar con la cátedra la convención de CPM y PERT (se usó actividad en el arco) y probarlos con ejercicios resueltos en clase.
+2. Evaluar si conviene poder ponerle nombre a cada actividad (A, B, C…) además de identificarla por sus eventos.
+3. Actualizar la documentación técnica (carpeta `docs/`) con Dijkstra, flujo máximo, CPM y PERT.
+4. Probar la aplicación con los grafos que entreguen las docentes, incluido uno de 200 nodos.
+5. Ensayar la demostración con grafos nuevos y con cambios de datos en vivo.
+6. Repartir entre los integrantes la explicación de cada algoritmo y de las decisiones técnicas.

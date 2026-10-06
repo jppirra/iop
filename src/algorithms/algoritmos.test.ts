@@ -27,8 +27,8 @@ const desdeTexto = (texto: string, dirigido = false): { grafo: Grafo; id: (n: st
 const pares = (r: ResultadoArbol) => r.aristas.map((a) => `${a.desde}-${a.hasta}`)
 
 describe('registro de estrategias', () => {
-  it('registra Prim, Kruskal, Dijkstra y Ford-Fulkerson en orden', () => {
-    expect(Object.keys(estrategias)).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson'])
+  it('registra los seis algoritmos en orden', () => {
+    expect(Object.keys(estrategias)).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson', 'cpm', 'pert'])
   })
 })
 

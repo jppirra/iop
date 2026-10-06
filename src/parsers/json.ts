@@ -6,6 +6,7 @@ const esNombre = (v: unknown): v is string | number =>
 
 /**
  * JSON: { "dirigido": false, "nodos": [...], "aristas": [{ "origen", "destino", "peso" }] }
+ * Para PERT cada arista puede llevar además "optimista" y "pesimista" (el peso es el tiempo más probable).
  * Los nodos pueden ser strings/números o objetos { "nombre", "x", "y" }. "nodos" es opcional.
  */
 export function parsearJson(texto: string): ResultadoParseo {
@@ -64,7 +65,16 @@ export function parsearJson(texto: string): ResultadoParseo {
         errores.push({ ubicacion, mensaje: `La arista une el nodo ${origen} consigo mismo.` })
         return
       }
-      aristas.push({ origen, destino, peso, ubicacion })
+      if (a.optimista === undefined && a.pesimista === undefined) {
+        aristas.push({ origen, destino, peso, ubicacion })
+        return
+      }
+      const { optimista, pesimista } = a
+      if (typeof optimista !== 'number' || typeof pesimista !== 'number' || optimista > peso || peso > pesimista) {
+        errores.push({ ubicacion, mensaje: 'Los tiempos tienen que ser números y cumplir optimista ≤ peso (más probable) ≤ pesimista.' })
+        return
+      }
+      aristas.push({ origen, destino, peso, optimista, pesimista, ubicacion })
     })
   }
 

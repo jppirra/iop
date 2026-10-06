@@ -12,6 +12,9 @@ export interface Arista {
   origen: string // id de nodo
   destino: string // id de nodo
   peso: number
+  /** PERT: tiempos optimista y pesimista de la actividad (el peso es el más probable). */
+  optimista?: number
+  pesimista?: number
 }
 
 export interface Grafo {
@@ -45,7 +48,7 @@ export interface Paso {
   etiquetasAristas?: Record<string, string>
   /** Texto de aviso si hubo un empate en este paso. */
   empate?: string
-  /** Índice de iteración asociada (tabla de etiquetas de Dijkstra, flujo por arco de Ford-Fulkerson). */
+  /** Índice de iteración asociada (tabla de etiquetas de Dijkstra, flujo por arco de Ford-Fulkerson, eventos calculados de CPM/PERT). */
   iteracion?: number
 }
 
@@ -126,8 +129,40 @@ export interface ResultadoFlujo {
   corte: CorteMinimo
 }
 
+export interface ActividadProyecto {
+  aristaId: string
+  desde: string // nombre del evento de inicio
+  hasta: string // nombre del evento de fin
+  duracion: number // en PERT, el tiempo esperado
+  optimista?: number
+  masProbable?: number
+  pesimista?: number
+  varianza?: number
+  es: number // inicio más temprano
+  ef: number // fin más temprano
+  ls: number // inicio más tardío
+  lf: number // fin más tardío
+  holgura: number
+  critica: boolean
+}
+
+export interface ResultadoProyecto {
+  tipo: 'proyecto'
+  metodo: 'cpm' | 'pert'
+  duracion: number
+  actividades: ActividadProyecto[]
+  /** Eventos en el orden en que se calculan (cada uno después de los que lo preceden). */
+  eventos: { nodo: string; temprano: number; tardio: number }[]
+  rutaCritica: string[] // nombres de eventos
+  arcosRutaCritica: string[] // ids
+  rutasCriticas: number
+  /** Solo PERT. */
+  varianza?: number
+  desvio?: number
+}
+
 /** Unión discriminada por `tipo`. Para Floyd/Bellman-Ford se suman variantes nuevas. */
-export type Resultado = ResultadoArbol | ResultadoRuta | ResultadoFlujo
+export type Resultado = ResultadoArbol | ResultadoRuta | ResultadoFlujo | ResultadoProyecto
 
 export interface Ejecucion<R extends Resultado = Resultado> {
   pasos: Paso[]
@@ -158,6 +193,8 @@ export interface Estrategia {
   parametros: { clave: ClaveParametro; etiqueta: string }[]
   /** Prim y Kruskal trabajan siempre sobre el grafo no dirigido. */
   forzarNoDirigido?: boolean
+  /** CPM y PERT trabajan siempre sobre el grafo dirigido. */
+  forzarDirigido?: boolean
   /** Textos de la leyenda de colores, si no sirven los generales. */
   leyenda?: Partial<Record<ClaseLeyenda, string>>
   validar(grafo: Grafo, parametros: Parametros): Validacion

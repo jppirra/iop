@@ -1,4 +1,4 @@
-import { completarNodos, leerPeso, type AristaPlana, type ErrorParseo, type ResultadoParseo } from './tipos'
+import { completarNodos, leerTiempos, type AristaPlana, type ErrorParseo, type ResultadoParseo } from './tipos'
 
 /** Separa una fila CSV respetando comillas dobles ("a, b" y "" como comilla escapada). */
 export function separarFilaCsv(fila: string, separador: string): string[] {
@@ -25,6 +25,7 @@ export function separarFilaCsv(fila: string, separador: string): string[] {
 
 /**
  * CSV con encabezado `origen,destino,peso` (en cualquier orden, sin distinguir mayúsculas).
+ * Para PERT se suman las columnas `optimista` y `pesimista` (el peso es el tiempo más probable).
  * También acepta `;` como separador (Excel en español); en ese caso el peso puede usar coma decimal.
  */
 export function parsearCsv(texto: string): ResultadoParseo {
@@ -37,6 +38,8 @@ export function parsearCsv(texto: string): ResultadoParseo {
   const separador = encabezadoCrudo.includes(';') && !encabezadoCrudo.includes(',') ? ';' : ','
   const encabezado = separarFilaCsv(encabezadoCrudo, separador).map((c) => c.toLowerCase())
   const columnas = { origen: encabezado.indexOf('origen'), destino: encabezado.indexOf('destino'), peso: encabezado.indexOf('peso') }
+  const iOptimista = encabezado.indexOf('optimista')
+  const iPesimista = encabezado.indexOf('pesimista')
   const faltantes = Object.entries(columnas).filter(([, i]) => i === -1).map(([k]) => k)
   if (faltantes.length > 0) {
     return {
@@ -66,16 +69,18 @@ export function parsearCsv(texto: string): ResultadoParseo {
       errores.push({ ubicacion, mensaje: 'Falta el nombre del nodo origen o destino.' })
       continue
     }
-    const peso = leerPeso(pesoTexto, separador === ';')
-    if (peso === null) {
-      errores.push({ ubicacion, mensaje: `Peso no numérico: "${pesoTexto}".` })
+    // Con las dos columnas de PERT completas se leen los tres tiempos; si no, solo el peso.
+    const conTiempos = iOptimista !== -1 && iPesimista !== -1 && campos[iOptimista] !== '' && campos[iPesimista] !== ''
+    const tiempos = leerTiempos(conTiempos ? [campos[iOptimista], pesoTexto, campos[iPesimista]] : [pesoTexto], separador === ';')
+    if (typeof tiempos === 'string') {
+      errores.push({ ubicacion, mensaje: tiempos })
       continue
     }
     if (origen === destino) {
       errores.push({ ubicacion, mensaje: `La arista une el nodo ${origen} consigo mismo.` })
       continue
     }
-    aristas.push({ origen, destino, peso, ubicacion })
+    aristas.push({ origen, destino, ...tiempos, ubicacion })
   }
 
   const grafo = completarNodos(aristas, [], errores)

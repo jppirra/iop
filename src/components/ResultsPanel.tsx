@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react'
-import type { Ejecucion, Paso, ResultadoArbol, ResultadoFlujo, ResultadoRuta } from '../types/graph'
+import { useEffect, useRef, useState } from 'react'
+import { fmt as fmtTiempo, probabilidadDeTerminar } from '../algorithms/proyecto'
+import { leerPeso } from '../parsers'
+import type { Ejecucion, Paso, ResultadoArbol, ResultadoFlujo, ResultadoProyecto, ResultadoRuta } from '../types/graph'
 
 interface Props {
   ejecucion: Ejecucion
@@ -21,6 +23,7 @@ export function ResultsPanel({ ejecucion, indice, mostrarHistorial, onIr }: Prop
       {resultado.tipo === 'arbol' && <ResultadoArbolVista resultado={resultado} paso={paso} final={final} />}
       {resultado.tipo === 'ruta' && <ResultadoRutaVista resultado={resultado} paso={paso} final={final} />}
       {resultado.tipo === 'flujo' && <ResultadoFlujoVista resultado={resultado} paso={paso} final={final} />}
+      {resultado.tipo === 'proyecto' && <ResultadoProyectoVista resultado={resultado} paso={paso} final={final} />}
 
       {mostrarHistorial && <Historial pasos={ejecucion.pasos} indice={indice} onIr={onIr} />}
     </div>
@@ -294,6 +297,141 @@ function ResultadoFlujoVista({ resultado, paso, final }: { resultado: ResultadoF
             corte mínimo.
           </p>
         </Aviso>
+      )}
+    </section>
+  )
+}
+
+function ResultadoProyectoVista({ resultado, paso, final }: { resultado: ResultadoProyecto; paso: Paso; final: boolean }) {
+  const n = resultado.eventos.length
+  // paso.iteracion cuenta eventos calculados: primero los tiempos más tempranos (1..n) y después los más tardíos (n+1..2n).
+  const k = paso.iteracion ?? 0
+  const conHolguras = k > 2 * n
+  const esPert = resultado.metodo === 'pert'
+  const [plazo, setPlazo] = useState('')
+  const plazoNumero = leerPeso(plazo, true)
+  const prob =
+    esPert && plazoNumero !== null ? probabilidadDeTerminar(resultado.duracion, resultado.desvio ?? 0, plazoNumero) : null
+
+  return (
+    <section className="space-y-2">
+      {final && (
+        <Aviso tipo="ok">
+          <p className="font-medium">
+            Duración {esPert ? 'esperada ' : ''}del proyecto: {fmtTiempo(resultado.duracion)}
+          </p>
+          <p>Ruta crítica: {resultado.rutaCritica.join(' → ')}</p>
+          {esPert && (
+            <p>
+              Varianza: {fmtTiempo(resultado.varianza ?? 0)} · Desvío estándar: {fmtTiempo(resultado.desvio ?? 0)}
+            </p>
+          )}
+        </Aviso>
+      )}
+      {final && resultado.rutasCriticas > 1 && (
+        <Aviso tipo="aviso">
+          Hay {resultado.rutasCriticas} rutas críticas con la misma duración.
+          {esPert && ' Se informa la de mayor varianza.'}
+        </Aviso>
+      )}
+
+      {final && esPert && (
+        <div className="rounded-md border border-slate-200 p-3">
+          <label className="block text-sm font-medium text-slate-700">
+            Probabilidad de terminar en un plazo
+            <input
+              value={plazo}
+              onChange={(e) => setPlazo(e.target.value)}
+              placeholder={`Plazo (ej: ${fmtTiempo(Math.ceil(resultado.duracion) + 1)})`}
+              inputMode="decimal"
+              className="campo mt-1"
+            />
+          </label>
+          {prob && (
+            <p className="mt-2 text-sm text-slate-700">
+              {prob.z !== null && (
+                <>
+                  Z = ({fmtTiempo(plazoNumero!)} − {fmtTiempo(resultado.duracion)}) / {fmtTiempo(resultado.desvio ?? 0)} = {prob.z.toFixed(2)} ·{' '}
+                </>
+              )}
+              Probabilidad: <strong className="text-teal-800">{(prob.probabilidad * 100).toFixed(2)} %</strong>
+            </p>
+          )}
+          {plazo.trim() !== '' && plazoNumero === null && <p className="mt-2 text-xs text-red-700">Ingresá un número.</p>}
+        </div>
+      )}
+
+      <h3 className="text-sm font-semibold text-slate-800">Eventos</h3>
+      <p className="text-xs text-slate-500">Tiempo más temprano y más tardío de cada nodo, en el orden en que se calculan.</p>
+      <div className="max-h-56 overflow-auto rounded-md border border-slate-200">
+        <table className="tabla tabla-compacta">
+          <thead className="sticky top-0">
+            <tr>
+              <th>Evento</th>
+              <th className="text-right">Más temprano</th>
+              <th className="text-right">Más tardío</th>
+            </tr>
+          </thead>
+          <tbody>
+            {resultado.eventos.map((e, i) => {
+              const tardioListo = k > n && n - 1 - i < k - n
+              return (
+                <tr key={e.nodo} className={tardioListo && e.temprano === e.tardio ? 'bg-blue-50 text-blue-900' : ''}>
+                  <td className="font-medium">{e.nodo}</td>
+                  <td className="text-right tabular-nums">{i < k ? fmtTiempo(e.temprano) : '—'}</td>
+                  <td className="text-right tabular-nums">{tardioListo ? fmtTiempo(e.tardio) : '—'}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {conHolguras && (
+        <>
+          <h3 className="pt-1 text-sm font-semibold text-slate-800">Actividades</h3>
+          <p className="text-xs text-slate-500">
+            IC/TC: inicio y terminación más cercanos · IL/TL: más lejanos · H: holgura. En azul, las actividades críticas.
+          </p>
+          <div className="max-h-80 overflow-auto rounded-md border border-slate-200">
+            <table className="tabla tabla-compacta">
+              <thead className="sticky top-0">
+                <tr>
+                  <th>Act.</th>
+                  {esPert && <th className="text-right">a / m / b</th>}
+                  <th className="text-right">{esPert ? 'te' : 'Dur.'}</th>
+                  {esPert && <th className="text-right">Var.</th>}
+                  <th className="text-right">IC</th>
+                  <th className="text-right">TC</th>
+                  <th className="text-right">IL</th>
+                  <th className="text-right">TL</th>
+                  <th className="text-right">H</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resultado.actividades.map((a) => (
+                  <tr key={a.aristaId} className={a.critica ? 'bg-blue-50 text-blue-900' : ''}>
+                    <td className="whitespace-nowrap font-medium">
+                      {a.desde}→{a.hasta}
+                    </td>
+                    {esPert && (
+                      <td className="whitespace-nowrap text-right tabular-nums">
+                        {fmtTiempo(a.optimista!)} / {fmtTiempo(a.masProbable!)} / {fmtTiempo(a.pesimista!)}
+                      </td>
+                    )}
+                    <td className="text-right tabular-nums">{fmtTiempo(a.duracion)}</td>
+                    {esPert && <td className="text-right tabular-nums">{fmtTiempo(a.varianza ?? 0)}</td>}
+                    <td className="text-right tabular-nums">{fmtTiempo(a.es)}</td>
+                    <td className="text-right tabular-nums">{fmtTiempo(a.ef)}</td>
+                    <td className="text-right tabular-nums">{fmtTiempo(a.ls)}</td>
+                    <td className="text-right tabular-nums">{fmtTiempo(a.lf)}</td>
+                    <td className="text-right tabular-nums">{fmtTiempo(a.holgura)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </section>
   )

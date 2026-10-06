@@ -1,7 +1,7 @@
 # Documento de entrega — TPI Modelos de red
 
 **Investigación Operativa · Ingeniería en Sistemas de Información · UTN**
-**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.000.005**
+**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.000.006**
 
 | Integrante | Legajo |
 | --- | --- |
@@ -38,7 +38,7 @@ Este documento responde a la consigna "Desarrollo de una aplicación para algori
 | Cargar grafos de diferentes tamaños (de 10 a 200 nodos) | Cumplido | Carga manual, carga masiva (texto, CSV o JSON, pegado o desde archivo) y generador aleatorio. Probado con 200 nodos y 371 aristas: se carga, se dibuja y se resuelve. Ver [3.2](#32-cargar-un-grafo-entregado-por-las-docentes) y [4.6](#46-cómo-verificaron-que-los-resultados-obtenidos-son-correctos). |
 | Ingresar las conexiones y sus pesos | Cumplido | Cada arista lleva origen, destino y peso (distancia, costo o capacidad). Se editan con un click; admite decimales. |
 | Representar adecuadamente el grafo y la información | Cumplido | Lienzo interactivo con nodos, aristas, pesos y flechas si es dirigido. Los grafos grandes se acomodan solos. |
-| Implementar los algoritmos de la asignatura | **Parcial: 4 de 6** | Ver tabla siguiente. |
+| Implementar los algoritmos de la asignatura | Cumplido: 6 de 6 | Ver tabla siguiente. |
 | Mostrar claramente los resultados | Cumplido | Resultado resaltado sobre el grafo, tablas por algoritmo y explicación en texto de cada paso. |
 
 ### Algoritmos
@@ -49,8 +49,8 @@ Este documento responde a la consigna "Desarrollo de una aplicación para algori
 | Kruskal | Implementado | Árbol de expansión mínima ordenando aristas. |
 | Dijkstra | Implementado | Ruta más corta entre origen y destino. |
 | Flujo máximo (Ford-Fulkerson) | Implementado | Flujo máximo de una fuente a un sumidero, con el corte mínimo. |
-| CPM | **No implementado** | Pendiente. |
-| PERT | **No implementado** | Pendiente. |
+| CPM | Implementado | Duración del proyecto, holguras y ruta crítica, con duración fija por actividad. |
+| PERT | Implementado | Igual que CPM con tres tiempos por actividad; agrega varianza y probabilidad de cumplir un plazo. |
 
 ---
 
@@ -60,7 +60,7 @@ Aplicación web que permite armar un grafo, elegir un algoritmo y ver el resulta
 
 - **Tecnología:** React + TypeScript, compilado con Vite. El grafo se dibuja con Cytoscape. No tiene servidor ni base de datos: todo corre en el navegador.
 - **Cómo ejecutarla:** `npm install` y `npm run dev` (abre en `http://localhost:5173`). Requiere Node 20 o superior. También se publica como sitio estático en Vercel.
-- **Tests:** `npm test` corre 51 tests automáticos.
+- **Tests:** `npm test` corre 66 tests automáticos.
 
 ---
 
@@ -125,7 +125,9 @@ Antes de cargar, la aplicación informa cuántos nodos y aristas detectó, y mar
 
 Si el grafo tiene más de 20 nodos, se acomoda solo. Con "Auto-layout" se vuelve a acomodar y con "Centrar" se ajusta el zoom.
 
-**Si el grafo es dirigido**, elegir "Dirigido" en la barra superior (o `"dirigido": true` en el JSON). Prim y Kruskal siempre lo tratan como no dirigido.
+**Si el grafo es dirigido**, elegir "Dirigido" en la barra superior (o `"dirigido": true` en el JSON). Prim y Kruskal siempre lo tratan como no dirigido; CPM y PERT, siempre como dirigido.
+
+**Para CPM y PERT** cada arco es una actividad y cada nodo un evento (inicio o fin de actividades); el peso es la duración. En PERT se cargan los tres tiempos: en el dibujo se escribe `optimista más probable pesimista` (por ejemplo `1 2 3`) al crear o editar la arista; en texto son cinco valores por línea (`1 2 1 2 3`); en CSV y JSON se agregan `optimista` y `pesimista`.
 
 ### 3.3 Modificar los datos de entrada
 
@@ -139,12 +141,14 @@ Cualquier cambio se hace sobre el grafo ya cargado: click en una arista para cam
 | Árbol mínimo - Kruskal | Nada | No dirigido |
 | Ruta más corta - Dijkstra | Origen y destino | Dirigido o no dirigido; pesos no negativos |
 | Flujo máximo - Ford-Fulkerson | Fuente y sumidero | Dirigido o no dirigido; el peso es la capacidad |
+| Proyectos - CPM | Nada | Dirigido y sin ciclos; el peso es la duración |
+| Proyectos - PERT | Nada (el plazo se ingresa en el resultado) | Dirigido y sin ciclos; tres tiempos por actividad |
 
 - **Ejecutar** reproduce los pasos animados (velocidad lenta, normal o rápida; se puede pausar).
 - **Paso a paso** permite avanzar a mano: Reiniciar, Anterior, Siguiente, Final.
 - En un grafo grande conviene **Paso a paso** y luego **Final** para ir directo al resultado.
 
-Si faltan datos o son inválidos (grafo vacío, origen igual al destino, pesos negativos en Dijkstra), el botón queda deshabilitado y se explica por qué.
+Si faltan datos o son inválidos (grafo vacío, origen igual al destino, pesos negativos en Dijkstra, un ciclo en CPM o PERT), el botón queda deshabilitado y se explica por qué.
 
 ### 3.5 Mostrar los resultados
 
@@ -153,6 +157,7 @@ Si faltan datos o son inválidos (grafo vacío, origen igual al destino, pesos n
 | Prim, Kruskal | Árbol en azul | Aristas elegidas en orden, distancia de cada una, acumulada y total. Avisos de empates, de soluciones óptimas múltiples y de grafo no conexo. |
 | Dijkstra | Ruta en azul | Ruta, distancia total y tabla de etiquetas `[distancia, previo]` por iteración. Avisos de rutas múltiples o de que no hay ruta. |
 | Ford-Fulkerson | `flujo/capacidad` sobre cada arco; flujo en azul y corte mínimo en rojo | Flujo máximo, caminos de aumento con su cuello de botella, flujo y holgura por arco, y corte mínimo. |
+| CPM, PERT | Ruta crítica en azul | Duración del proyecto, ruta crítica, tiempo más temprano y más tardío de cada evento, y por actividad: inicio y terminación más cercanos y más lejanos y holgura. PERT agrega tiempo esperado, varianza, desvío y la probabilidad de terminar en el plazo que se ingrese. |
 
 Colores durante la ejecución: naranja = lo que se evalúa en ese paso; verde = lo ya incluido en la solución; gris = descartado; azul = resultado final.
 
@@ -194,6 +199,7 @@ No se guarda como matriz ni como lista de adyacencia. Cuando un algoritmo necesi
 | Conjunto (`Set`) de nodos | Prim (conectados), Dijkstra (fijados) | Saber en tiempo constante si un nodo ya fue procesado. |
 | Mapas de distancia y de nodo previo | Dijkstra | Son las etiquetas `[distancia, previo]`; con los previos se reconstruye la ruta. |
 | Mapa de flujo por arista y cola (BFS) | Ford-Fulkerson | El flujo define la red residual; la cola busca el camino de aumento más corto. |
+| Orden topológico de los eventos y mapas de tiempo más temprano y más tardío | CPM, PERT | Cada evento se calcula después de todos los que lo preceden, en una sola pasada; además detecta ciclos. |
 | Lista de pasos | Todos | Cada algoritmo devuelve todos sus pasos; la pantalla solo los recorre. |
 
 No se usó cola de prioridad en Prim ni en Dijkstra: el mínimo se busca recorriendo la lista. Es más lento en teoría, pero el código queda igual a la regla que se explica en clase y para estos tamaños es instantáneo (ver tiempos en [4.6](#46-cómo-verificaron-que-los-resultados-obtenidos-son-correctos)).
@@ -210,7 +216,11 @@ Cada algoritmo es una función que recibe el grafo y devuelve `{ pasos, resultad
 
 **Ford-Fulkerson** ([fordFulkerson.ts](src/algorithms/fordFulkerson.ts)). Arranca con flujo 0. Busca un camino de la fuente al sumidero con capacidad disponible, calcula su cuello de botella (la menor capacidad residual del camino) y envía esa cantidad. Repite hasta que no queda ningún camino. Los arcos inversos permiten deshacer una asignación anterior. Al terminar informa el corte mínimo, cuya capacidad es igual al flujo máximo.
 
-El recorrido línea por línea de cada uno está en el [MANUAL.md](MANUAL.md), secciones 3 a 6.
+**CPM** ([cpm.ts](src/algorithms/cpm.ts)). Cada arco es una actividad. Ordena los eventos de modo que cada uno quede después de los que lo preceden. Hacia adelante, el tiempo más temprano de un evento es el mayor de los que llegan; el mayor de todos es la duración del proyecto. Hacia atrás, el tiempo más tardío es el menor de los que salen. La holgura de cada actividad sale de la diferencia, y las de holgura 0 forman la ruta crítica.
+
+**PERT** ([pert.ts](src/algorithms/pert.ts)). Usa el mismo cálculo que CPM (está compartido en [proyecto.ts](src/algorithms/proyecto.ts)), tomando como duración el tiempo esperado `(a + 4m + b) / 6`. Suma las varianzas `((b − a) / 6)²` de la ruta crítica para obtener el desvío del proyecto y, con la normal estándar, la probabilidad de terminar en un plazo.
+
+El recorrido línea por línea de cada uno está en el [MANUAL.md](MANUAL.md), secciones 3 a 7.
 
 ### 4.5 ¿Cómo identifica la aplicación los nodos y las conexiones?
 
@@ -222,7 +232,7 @@ El recorrido línea por línea de cada uno está en el [MANUAL.md](MANUAL.md), s
 
 ### 4.6 ¿Cómo verificaron que los resultados obtenidos son correctos?
 
-Con 51 tests automáticos (`npm test`) y cuatro criterios:
+Con 66 tests automáticos (`npm test`) y cuatro criterios:
 
 1. **Casos con solución conocida.** Los tests reproducen los ejemplos del libro de la cátedra (Render, cap. 11) con el resultado y el orden de los pasos:
 
@@ -232,6 +242,8 @@ Con 51 tests automáticos (`npm test`) y cuatro criterios:
    | Leadville → Dillon (fig. 11.19) | Dijkstra | Ruta 1-2-3-6-7, distancia 32 |
    | Ray Design (fig. 11.10) | Dijkstra | Ruta 1-2-3-5-6, distancia 290 |
    | Red de transmisión (apunte de Ford-Fulkerson) | Ford-Fulkerson | Flujo máximo 18 |
+   | General Foundry (cap. 12) | CPM | 15 semanas, ruta crítica A-C-E-G-H y las holguras de las 8 actividades |
+   | General Foundry (cap. 12) | PERT | 15 semanas esperadas, varianza 3,11, desvío 1,76; 71,5 % de terminar en 16 semanas |
 
 2. **Dos algoritmos que deben coincidir.** Prim y Kruskal resuelven el mismo problema por caminos distintos: si dan el mismo total, se validan entre sí. También se verifica que Prim dé el mismo total desde cualquier nodo inicial.
 3. **Propiedades que siempre se cumplen.** El flujo máximo es igual a la capacidad del corte mínimo; ningún arco supera su capacidad; en cada nodo intermedio entra lo mismo que sale; la suma de los pesos de la ruta de Dijkstra es la distancia informada.
@@ -260,6 +272,7 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 | En flujo máximo, una primera elección de camino podía impedir llegar al máximo | Se implementó la red residual con arcos inversos, que permiten deshacer flujo ya asignado. Hay un test con un caso donde sin arcos inversos el resultado sería incorrecto. |
 | Capacidades decimales producían valores como 0,30000000000000004 | Se redondea a 9 decimales en cada operación de flujo. |
 | Un grafo de 200 nodos se dibujaba ilegible | Los nodos se ubicaban en círculo y el zoom mínimo no alcanzaba para verlo completo. Ahora, con más de 20 nodos, se acomodan solos y se amplió el zoom. |
+| CPM y PERT necesitan más datos por actividad que un solo peso | Se modeló cada actividad como un arco, así CPM usa el grafo tal cual. Para PERT se agregaron dos datos opcionales a la arista (optimista y pesimista) y se extendieron los tres formatos de carga, sin cambiar nada para los demás algoritmos. |
 | El dibujo del ejemplo del libro (fig. 11.1) no se leía completo en el material disponible | Las 7 aristas del árbol salen de la tabla 11.1; las restantes se reconstruyeron de los números de la figura. El resultado coincide con el libro. |
 
 ---
@@ -284,7 +297,8 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 
 ## 6. Límites conocidos
 
-- **CPM y PERT no están implementados** (ver [sección 7](#7-pendientes-antes-de-la-entrega)).
+- CPM y PERT representan cada actividad como un arco entre dos eventos. Las actividades se identifican por sus eventos (por ejemplo `2→4`), no por una letra, y una precedencia sin actividad se carga como arco de duración 0.
+- En PERT, para 16 semanas en el ejemplo del libro la app da 71,5 % y el libro 71,6 %: el libro busca en la tabla con Z redondeado a dos decimales y la app usa Z sin redondear.
 - No admite dos aristas entre el mismo par de nodos.
 - El grafo no se guarda al cerrar la pestaña; hay que exportarlo (JSON o CSV) para conservarlo.
 - En grafos grandes la animación completa es larga (un paso por nodo o arista): conviene ir directo al resultado con "Final". La tabla de etiquetas de Dijkstra tiene una columna por nodo y requiere desplazarse.
@@ -295,8 +309,8 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 
 ## 7. Pendientes antes de la entrega
 
-1. **Implementar CPM y PERT.** La consigna los pide y hoy no existen en la aplicación. Son los dos algoritmos que faltan para cumplir el requerimiento completo.
-2. **Actualizar la carpeta [docs/](docs/).** Describe solo Prim y Kruskal; no menciona Dijkstra ni Flujo máximo.
+1. **Confirmar la convención de CPM y PERT con lo visto en clase.** Se implementó actividad en el arco. Si la cátedra trabaja con actividad en el nodo, los resultados (duración, holguras, ruta crítica) son los mismos, pero el grafo se dibuja distinto.
+2. **Actualizar la carpeta [docs/](docs/).** Describe solo Prim y Kruskal; no menciona Dijkstra, Flujo máximo, CPM ni PERT.
 3. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
 
 ---

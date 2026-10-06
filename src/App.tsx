@@ -28,14 +28,24 @@ import {
   moverNodos,
   nombreSugerido,
   renombrarNodo,
+  textoPeso,
 } from './lib/grafo'
-import { leerPeso, type GrafoPlano } from './parsers'
+import { leerTiempos, type GrafoPlano, type Tiempos } from './parsers'
 import type { ClaseLeyenda, ClaveParametro, Ejecucion, Estrategia, Grafo, Parametros } from './types/graph'
 
 /** Hasta esta cantidad, los nodos cargados sin posición se dibujan en círculo. */
 const NODOS_EN_CIRCULO = 20
 
-const validarPeso = (v: string) => (leerPeso(v, true) === null ? 'Ingresá un número (ej: 3 o 2,5).' : null)
+// Un número, o los tres tiempos de PERT separados por espacio, ";" o "/".
+const leerEntradaPeso = (v: string): Tiempos | string => {
+  const partes = v.trim().split(/[\s;/]+/).filter(Boolean)
+  if (partes.length !== 1 && partes.length !== 3) return 'Ingresá un número (ej: 3 o 2,5) o, para PERT, tres: optimista más probable pesimista (ej: 1 2 3).'
+  return leerTiempos(partes, true)
+}
+const validarPeso = (v: string) => {
+  const leido = leerEntradaPeso(v)
+  return typeof leido === 'string' ? leido : null
+}
 
 function parametrosPorNombre(grafo: Grafo, porNombre: EjemploLibro['parametros']): Parametros {
   const id = (nombre?: string) => grafo.nodos.find((n) => n.nombre === nombre)?.id
@@ -67,11 +77,11 @@ export default function App() {
   const pestanaActiva = verCargaMasiva ? pestana : 'ejecutar'
 
   const estrategia = visibles.find((e) => e.id === estrategiaId) ?? visibles[0] ?? estrategias.prim
-  const grafoEfectivo = useMemo(
-    () =>
-      (estrategia.forzarNoDirigido || !dirigidoPermitido) && grafo.dirigido ? { ...grafo, dirigido: false } : grafo,
-    [grafo, estrategia, dirigidoPermitido],
-  )
+  const grafoEfectivo = useMemo(() => {
+    const noDirigido = estrategia.forzarNoDirigido || !dirigidoPermitido
+    const dirigido = estrategia.forzarDirigido ? true : noDirigido ? false : grafo.dirigido
+    return dirigido === grafo.dirigido ? grafo : { ...grafo, dirigido }
+  }, [grafo, estrategia, dirigidoPermitido])
 
   // Si un parámetro no es válido (p. ej. se borró el nodo) se usa un nodo por defecto.
   const parametrosEfectivos = useMemo(() => {
@@ -192,11 +202,11 @@ export default function App() {
     const flecha = grafoEfectivo.dirigido ? '→' : '–'
     const peso = await pedir({
       titulo: `Nueva arista ${nombre(origen)} ${flecha} ${nombre(destino)}`,
-      etiqueta: 'Peso (distancia, costo, capacidad…)',
+      etiqueta: 'Peso (distancia, costo, capacidad, duración…). Para PERT: optimista más probable pesimista (ej: 1 2 3)',
       valorInicial: '1',
       validar: validarPeso,
     })
-    if (peso !== null) aplicar((g) => agregarArista(g, origen, destino, leerPeso(peso, true)!))
+    if (peso !== null) aplicar((g) => agregarArista(g, origen, destino, leerEntradaPeso(peso) as Tiempos))
   }
 
   const alClickArista = async (id: string) => {
@@ -205,11 +215,11 @@ export default function App() {
     const nombre = (nid: string) => grafo.nodos.find((n) => n.id === nid)?.nombre
     const peso = await pedir({
       titulo: `Editar arista ${nombre(arista.origen)} ${grafoEfectivo.dirigido ? '→' : '–'} ${nombre(arista.destino)}`,
-      etiqueta: 'Peso',
-      valorInicial: String(arista.peso),
+      etiqueta: 'Peso (para PERT: optimista más probable pesimista)',
+      valorInicial: textoPeso(arista, ' '),
       validar: validarPeso,
     })
-    if (peso !== null) aplicar((g) => editarPeso(g, id, leerPeso(peso, true)!))
+    if (peso !== null) aplicar((g) => editarPeso(g, id, leerEntradaPeso(peso) as Tiempos))
   }
 
   const alCargar = (plano: GrafoPlano, modo: 'reemplazar' | 'agregar') => {
@@ -367,7 +377,8 @@ export default function App() {
           <Toolbar
             mostrarDirigido={dirigidoPermitido}
             dirigido={grafo.dirigido}
-            dirigidoForzado={!!estrategia.forzarNoDirigido}
+            dirigidoForzado={!!estrategia.forzarNoDirigido || !!estrategia.forzarDirigido}
+            valorForzado={!!estrategia.forzarDirigido}
             puedeDeshacer={puedeDeshacer}
             hayNodos={grafo.nodos.length > 0}
             onCambiarDirigido={(d) => aplicar((g) => (g.dirigido === d ? g : { ...g, dirigido: d }))}

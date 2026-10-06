@@ -2,7 +2,9 @@ interface Props {
   /** false si ninguno de los algoritmos habilitados acepta grafos dirigidos. */
   mostrarDirigido: boolean
   dirigido: boolean
+  /** La estrategia elegida impone el tipo de grafo (`valorForzado`). */
   dirigidoForzado: boolean
+  valorForzado: boolean
   puedeDeshacer: boolean
   hayNodos: boolean
   onCambiarDirigido: (dirigido: boolean) => void
@@ -21,7 +23,7 @@ export function Toolbar(p: Props) {
           { valor: false, texto: 'No dirigido' },
           { valor: true, texto: 'Dirigido' },
         ].map((op) => {
-          const activo = (p.dirigidoForzado ? false : p.dirigido) === op.valor
+          const activo = (p.dirigidoForzado ? p.valorForzado : p.dirigido) === op.valor
           return (
             <button
               key={op.texto}
@@ -39,7 +41,9 @@ export function Toolbar(p: Props) {
       </div>
       )}
       {p.mostrarDirigido && p.dirigidoForzado && (
-        <span className="text-xs text-slate-500">El árbol mínimo usa siempre grafo no dirigido</span>
+        <span className="text-xs text-slate-500">
+          {p.valorForzado ? 'CPM y PERT usan siempre grafo dirigido' : 'El árbol mínimo usa siempre grafo no dirigido'}
+        </span>
       )}
 
       <div className="ml-auto flex flex-wrap gap-2">

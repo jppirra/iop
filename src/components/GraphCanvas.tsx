@@ -1,6 +1,7 @@
 import type { Core, EventObject, StylesheetJson } from 'cytoscape'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import CytoscapeComponent from 'react-cytoscapejs'
+import { textoPeso } from '../lib/grafo'
 import type { Grafo, Paso } from '../types/graph'
 
 export interface CanvasApi {
@@ -110,7 +111,7 @@ export function GraphCanvas(props: Props) {
   const elementos = useMemo(
     () => [
       ...grafo.nodos.map((n) => ({ data: { id: n.id, label: n.nombre, ancho: Math.max(34, n.nombre.length * 8 + 18) }, position: { x: n.x, y: n.y } })),
-      ...grafo.aristas.map((a) => ({ data: { id: a.id, source: a.origen, target: a.destino, label: String(a.peso), peso: String(a.peso) } })),
+      ...grafo.aristas.map((a) => ({ data: { id: a.id, source: a.origen, target: a.destino, label: textoPeso(a), peso: textoPeso(a) } })),
     ],
     [grafo],
   )

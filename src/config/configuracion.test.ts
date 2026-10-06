@@ -17,7 +17,7 @@ const todas = listaEstrategias
 describe('configuración', () => {
   it('por defecto muestra todo', () => {
     const c = configPorDefecto(todas)
-    expect(c.estrategias).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson'])
+    expect(c.estrategias).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson', 'cpm', 'pert'])
     expect(permiteDirigido(c, todas)).toBe(true)
   })
 
@@ -65,6 +65,6 @@ describe('configuración', () => {
   })
 
   it('nunca deja la lista de estrategias vacía', () => {
-    expect(normalizar({ estrategias: [] }, todas).estrategias).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson'])
+    expect(normalizar({ estrategias: [] }, todas).estrategias).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson', 'cpm', 'pert'])
   })
 })

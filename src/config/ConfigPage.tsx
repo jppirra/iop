@@ -117,7 +117,8 @@ export function ConfigPage() {
                   <div>
                     <p className="font-medium text-slate-800">{e.nombre}</p>
                     <p className="text-xs text-slate-500">
-                      {e.descripcion} {e.forzarNoDirigido ? 'Solo grafos no dirigidos.' : 'Acepta grafos dirigidos.'}
+                      {e.descripcion}{' '}
+                      {e.forzarNoDirigido ? 'Solo grafos no dirigidos.' : e.forzarDirigido ? 'Solo grafos dirigidos.' : 'Acepta grafos dirigidos.'}
                     </p>
                   </div>
                   <Interruptor

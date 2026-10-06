@@ -1,4 +1,4 @@
-import { completarNodos, leerPeso, type AristaPlana, type ErrorParseo, type ResultadoParseo } from './tipos'
+import { completarNodos, leerTiempos, type AristaPlana, type ErrorParseo, type ResultadoParseo } from './tipos'
 
 const TOKEN = /"([^"]*)"|'([^']*)'|(\S+)/g
 
@@ -9,6 +9,7 @@ export function tokenizar(linea: string): string[] {
 
 /**
  * Formato texto: una arista por línea `origen destino peso`.
+ * Para PERT, cinco valores: `origen destino optimista masProbable pesimista`.
  * Líneas vacías o que empiezan con # se ignoran. Una línea con un solo nombre crea un nodo aislado.
  */
 export function parsearTexto(texto: string): ResultadoParseo {
@@ -26,24 +27,24 @@ export function parsearTexto(texto: string): ResultadoParseo {
       aislados.push({ nombre: tokens[0] })
       return
     }
-    if (tokens.length !== 3) {
+    if (tokens.length !== 3 && tokens.length !== 5) {
       errores.push({
         ubicacion,
-        mensaje: `Línea mal formada: se esperaban 3 valores (origen destino peso) y hay ${tokens.length}.`,
+        mensaje: `Línea mal formada: se esperaban 3 valores (origen destino peso) o 5 (origen destino optimista másProbable pesimista) y hay ${tokens.length}.`,
       })
       return
     }
-    const [origen, destino, pesoTexto] = tokens
-    const peso = leerPeso(pesoTexto, true)
-    if (peso === null) {
-      errores.push({ ubicacion, mensaje: `Peso no numérico: "${pesoTexto}".` })
+    const [origen, destino, ...valores] = tokens
+    const tiempos = leerTiempos(valores, true)
+    if (typeof tiempos === 'string') {
+      errores.push({ ubicacion, mensaje: tiempos })
       return
     }
     if (origen === destino) {
       errores.push({ ubicacion, mensaje: `La arista une el nodo ${origen} consigo mismo.` })
       return
     }
-    aristas.push({ origen, destino, peso, ubicacion })
+    aristas.push({ origen, destino, ...tiempos, ubicacion })
   })
 
   const grafo = completarNodos(aristas, aislados, errores)

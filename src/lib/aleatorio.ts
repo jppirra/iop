@@ -44,9 +44,10 @@ export function grafoAleatorio(opciones: OpcionesAleatorio = {}): GrafoPlano {
   const clave = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`)
   const usadas = new Set<string>()
   const aristas: GrafoPlano['aristas'] = []
+  // Los arcos van siempre del nodo de menor número al de mayor: así, visto como dirigido, no tiene ciclos (sirve para CPM y PERT).
   const agregar = (a: number, b: number) => {
     usadas.add(clave(a, b))
-    aristas.push({ origen: nodos[a].nombre, destino: nodos[b].nombre, peso: entero(pesoMin, pesoMax) })
+    aristas.push({ origen: nodos[Math.min(a, b)].nombre, destino: nodos[Math.max(a, b)].nombre, peso: entero(pesoMin, pesoMax) })
   }
 
   // Árbol aleatorio: cada nodo nuevo se une a uno ya conectado, preferentemente cercano.

@@ -1,6 +1,6 @@
 # Grupo 3 - IOP 2026
 
-Versión **v1.000.005**
+Versión **v1.000.006**
 
 > Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Informe de avance (4 páginas): [INFORME.md](INFORME.md), que también se ve con el estilo de la app en `/informe`. Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
@@ -40,6 +40,8 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Árbol mínimo - Kruskal.
 - Ruta más corta - Dijkstra: se eligen origen y destino.
 - Flujo máximo - Ford-Fulkerson: se eligen fuente (S) y sumidero (T); el peso de cada arco es su capacidad.
+- Proyectos - CPM: cada arco es una actividad y su peso es la duración. No pide nodos.
+- Proyectos - PERT: igual, con tres tiempos por actividad (optimista, más probable y pesimista).
 
 **Edición del grafo**
 
@@ -48,11 +50,13 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Click en una arista: editar el peso. Doble click en un nodo: renombrarlo.
 - `Supr`: elimina los nodos/aristas seleccionados. `Ctrl+Z`: deshacer.
 - Arrastrar nodos, Auto-layout, Centrar, Limpiar.
-- Grafo dirigido / no dirigido (Prim y Kruskal fuerzan no dirigido).
+- Grafo dirigido / no dirigido (Prim y Kruskal fuerzan no dirigido; CPM y PERT fuerzan dirigido).
+- Para PERT, el peso se escribe como tres tiempos: `optimista más probable pesimista` (por ejemplo `1 2 3`).
 
 **Carga masiva** (pestaña "Carga masiva", textarea o archivo)
 
 - Texto, una arista por línea: `origen destino peso` (nombres con espacios entre comillas: `"Casa 1" "Casa 2" 4`; `#` para comentarios).
+- Para PERT, la línea de texto lleva cinco valores (`origen destino optimista másProbable pesimista`); en CSV y JSON se suman `optimista` y `pesimista` (el `peso` es el más probable).
 - CSV con encabezado `origen,destino,peso` (también acepta `;` como separador, como exporta Excel en español).
 - JSON: `{ "dirigido": false, "nodos": [...], "aristas": [{ "origen", "destino", "peso" }] }`.
 - Los nodos se crean a partir de las aristas. Hasta 20 nodos se dibujan en círculo; con más, se acomodan solos (Auto-layout), así un grafo de 200 nodos se puede leer apenas se carga.
@@ -67,6 +71,7 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Árbol mínimo: tabla de aristas elegidas en orden con distancia acumulada y total.
 - Dijkstra: ruta, distancia total y tabla de etiquetas `[distancia, previo]` por iteración.
 - Ford-Fulkerson: cada arco muestra `flujo/capacidad` sobre el grafo; tabla de caminos de aumento (cuello de botella `k` y flujo acumulado), tabla de flujo y holgura por arco, y al final el corte mínimo (en rojo) con su capacidad, igual al flujo máximo. Cada iteración son dos pasos: buscar el camino de aumento en la red residual (BFS) y aumentar el flujo. En un grafo no dirigido cada arista admite flujo en cualquiera de los dos sentidos.
+- CPM y PERT: duración del proyecto y ruta crítica en azul; tabla de eventos (tiempo más temprano y más tardío) y de actividades (inicio y terminación más cercanos y más lejanos, holgura). PERT agrega tiempo esperado, varianza y un campo para calcular la probabilidad de terminar en un plazo.
 - Aviso de empates y de soluciones óptimas múltiples; aviso de grafo no conexo; Dijkstra bloquea pesos negativos y avisa si no hay ruta.
 
 **Ejemplos del libro** (menú en la cabecera)
@@ -77,6 +82,8 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 | Leadville → Dillon | 11.19 (problema resuelto 11-3) | Ruta 1-2-3-6-7, distancia 32 |
 | Ray Design, Inc. | 11.10 | Ruta 1-2-3-5-6, distancia 290 |
 | Red de transmisión | Apunte Ford-Fulkerson (`Lib/`) | Flujo máximo 8 + 10 = 18 |
+| General Foundry (CPM) | Cap. 12 | 15 semanas, ruta crítica A-C-E-G-H |
+| General Foundry (PERT) | Cap. 12 | 15 semanas esperadas, varianza 3,11; 71,5 % de terminar en 16 |
 
 Las aristas de la fig. 11.1 que no forman parte del árbol (1–4, 3–5, 4–6, 5–7, 6–7) se reconstruyeron a partir de los números de la figura, ya que en el texto extraído del libro el dibujo aparece desordenado. Las 7 aristas del árbol y el recorrido paso a paso coinciden con la tabla 11.1.
 
@@ -84,7 +91,7 @@ Las aristas de la fig. 11.1 que no forman parte del árbol (1–4, 3–5, 4–6,
 
 Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) se elige qué se muestra:
 
-- **Algoritmos disponibles**: Prim, Kruskal, Dijkstra y/o Ford-Fulkerson (al menos uno). Solo se ven los que figuran en `estrategias` de `config.json` (hoy los cuatro): un algoritmo nuevo queda oculto hasta sumar su id. Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
+- **Algoritmos disponibles**: Prim, Kruskal, Dijkstra, Ford-Fulkerson, CPM y/o PERT (al menos uno). Solo se ven los que figuran en `estrategias` de `config.json` (hoy los seis): un algoritmo nuevo queda oculto hasta sumar su id. Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
 - **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar, JSON de ejemplo e integrantes.
 - Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
 
@@ -105,7 +112,8 @@ Entrando a `/informe` (sin enlace desde la app, igual que `/config`) se ve [INFO
 src/
   types/graph.ts        Tipos Nodo, Arista, Grafo, Paso, Resultado, Estrategia
   algorithms/           Funciones puras, sin React. Cada una devuelve { pasos, resultado }
-    prim.ts  kruskal.ts  dijkstra.ts  fordFulkerson.ts  utils.ts  index.ts (registro)
+    prim.ts  kruskal.ts  dijkstra.ts  fordFulkerson.ts  cpm.ts  pert.ts
+    proyecto.ts (cálculo común de CPM y PERT)  utils.ts  index.ts (registro)
   parsers/              texto.ts, csv.ts, json.ts, exportar.ts, index.ts (detección de formato)
   lib/grafo.ts          Operaciones inmutables sobre el grafo (agregar, eliminar, fusionar…)
   examples/             Ejemplos del libro, integrantes y versión
@@ -129,4 +137,4 @@ El selector, la validación, el paso a paso y el resaltado en el grafo funcionan
 
 ## Tests
 
-`npm test` corre 51 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, Ford-Fulkerson (red del apunte = 18, corte mínimo igual al flujo máximo, arcos inversos, conservación en los nodos, grafos no dirigidos, capacidades decimales), y los tres parsers con sus errores por línea la exportación ida y vuelta, grafos de 200 nodos (Prim = Kruskal, flujo máximo = corte mínimo), y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
+`npm test` corre 66 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, Ford-Fulkerson (red del apunte = 18, corte mínimo igual al flujo máximo, arcos inversos, conservación en los nodos, grafos no dirigidos, capacidades decimales), y los tres parsers con sus errores por línea la exportación ida y vuelta, grafos de 200 nodos (Prim = Kruskal, flujo máximo = corte mínimo), CPM y PERT (General Foundry = 15 semanas con todas sus holguras, varianza 3,11 y probabilidad de un plazo; ciclos, rutas críticas múltiples, carga de los tres tiempos), y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
