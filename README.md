@@ -1,6 +1,8 @@
 # Grupo 3 - IOP 2026
 
-Versión **v1.000.002**
+Versión **v1.000.003**
+
+> Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
 App web educativa para probar los algoritmos de grafos del capítulo 11 "Modelos de redes" de Render (*Métodos cuantitativos para los negocios*). Permite armar un grafo visualmente o por carga masiva, ejecutar un algoritmo y ver el resultado paso a paso, con la explicación de cada decisión.
 
@@ -53,7 +55,8 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Texto, una arista por línea: `origen destino peso` (nombres con espacios entre comillas: `"Casa 1" "Casa 2" 4`; `#` para comentarios).
 - CSV con encabezado `origen,destino,peso` (también acepta `;` como separador, como exporta Excel en español).
 - JSON: `{ "dirigido": false, "nodos": [...], "aristas": [{ "origen", "destino", "peso" }] }`.
-- Los nodos se crean a partir de las aristas. Los errores se informan por línea (peso no numérico, línea mal formada, arista repetida, etc.).
+- Los nodos se crean a partir de las aristas. Hasta 20 nodos se dibujan en círculo; con más, se acomodan solos (Auto-layout), así un grafo de 200 nodos se puede leer apenas se carga.
+- Los errores se informan por línea (peso no numérico, línea mal formada, arista repetida, etc.).
 - Se puede reemplazar el grafo o agregar al actual, y exportar el grafo a JSON o CSV.
 
 **Ejecución**
@@ -120,4 +123,4 @@ El selector, la validación, el paso a paso y el resaltado en el grafo funcionan
 
 ## Tests
 
-`npm test` corre 48 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, Ford-Fulkerson (red del apunte = 18, corte mínimo igual al flujo máximo, arcos inversos, conservación en los nodos, grafos no dirigidos, capacidades decimales), y los tres parsers con sus errores por línea la exportación ida y vuelta, y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).
+`npm test` corre 50 tests: los ejemplos del libro (Lauderdale = 16 con Prim desde cualquier nodo y con Kruskal; Leadville = 1-2-3-6-7 con 32 y el orden de etiquetas de la fig. 11.20; Ray Design = 290), empates y soluciones múltiples, grafos no conexos, pesos negativos, ausencia de ruta, sentido de los arcos, Ford-Fulkerson (red del apunte = 18, corte mínimo igual al flujo máximo, arcos inversos, conservación en los nodos, grafos no dirigidos, capacidades decimales), y los tres parsers con sus errores por línea la exportación ida y vuelta, grafos de 200 nodos (Prim = Kruskal, flujo máximo = corte mínimo), y el generador de grafos aleatorios (siempre conexo, sin aristas repetidas, pesos en rango).

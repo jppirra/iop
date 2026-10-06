@@ -136,7 +136,8 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
 
     for (const t of camino) flujo.set(t.arista.id, limpiar(flujo.get(t.arista.id)! + t.sentido * k))
     total = limpiar(total + k)
-    const saturados = camino.filter((t) => residual(t) <= EPS)
+    // Saturado: quedó con flujo igual a su capacidad (un arco inverso que se vacía no cuenta).
+    const saturados = camino.filter((t) => Math.abs(flujo.get(t.arista.id)!) >= t.arista.peso - EPS && residual(t) <= EPS)
     const estado = arcos()
     const detalle = (id: string) => {
       const a = estado.find((x) => x.aristaId === id)!
@@ -147,8 +148,10 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
     pasos.push({
       titulo: `Iteración ${numero}: aumentar el flujo`,
       descripcion:
-        `Se envían ${k} unidades por ${textoCamino}. Flujo actualizado: ${idsCamino.map(detalle).join(', ')}. ` +
-        `${saturados.length > 1 ? 'Se saturan' : 'Se satura'} ${saturados.map(flecha).join(', ')}: ya no admite${saturados.length > 1 ? 'n' : ''} más flujo. ` +
+        `${k === 1 ? 'Se envía 1 unidad' : `Se envían ${k} unidades`} por ${textoCamino}. Flujo actualizado: ${idsCamino.map(detalle).join(', ')}. ` +
+        (saturados.length > 0
+          ? `${saturados.length > 1 ? 'Se saturan' : 'Se satura'} ${saturados.map(flecha).join(', ')}: ya no admite${saturados.length > 1 ? 'n' : ''} más flujo. `
+          : '') +
         `Flujo acumulado: ${total}.`,
       nodosActuales: [],
       aristasEvaluadas: [],

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ejemplosLibro } from '../examples/libro'
+import { grafoAleatorio } from '../lib/aleatorio'
 import { desdePlano } from '../lib/grafo'
 import { parsearTexto } from '../parsers'
 import type { Grafo, ResultadoArbol, ResultadoRuta } from '../types/graph'
@@ -8,6 +9,7 @@ import { estrategia as estrategiaFlujo, fordFulkerson } from './fordFulkerson'
 import { estrategias } from './index'
 import { kruskal } from './kruskal'
 import { prim } from './prim'
+import { nodoMasLejano } from './utils'
 
 const ejemplo = (id: string) => {
   const e = ejemplosLibro.find((x) => x.id === id)!
@@ -187,6 +189,9 @@ describe('Flujo máximo - Ford-Fulkerson', () => {
     expect(resultado.flujoMaximo).toBe(2)
     expect(resultado.iteraciones[2].camino).toEqual(['S', 'C', 'B', 'A', 'D', 'E', 'T'])
     expect(pasos[3].descripcion).toContain('arco inverso')
+    // El arco inverso B→A se vacía, no se satura.
+    expect(pasos[4].descripcion).toContain('Se envía 1 unidad por')
+    expect(pasos[4].descripcion).toContain('Se saturan S→C, C→B, A→D, D→E, E→T:')
     expect(resultado.iteraciones.at(-1)!.arcos.find((a) => a.desde === 'A' && a.hasta === 'B')!.flujo).toBe(0)
     expect(resultado.corte.capacidad).toBe(2)
   })
@@ -233,5 +238,38 @@ describe('Flujo máximo - Ford-Fulkerson', () => {
     const v = estrategiaFlujo.validar(noDirigido, { origen: id('S'), destino: id('A') })
     expect(v.errores).toEqual([])
     expect(v.advertencias[0]).toContain('no es dirigido')
+  })
+})
+
+describe('grafos grandes (200 nodos)', () => {
+  const grande = (semilla: number) => {
+    const grafo = desdePlano(grafoAleatorio({ minNodos: 200, maxNodos: 200, densidad: 0.6, semilla }), false)
+    const origen = grafo.nodos[0].id
+    return { grafo, origen, destino: nodoMasLejano(grafo, origen) }
+  }
+
+  it('Prim y Kruskal conectan los 200 nodos con 199 aristas y el mismo total', () => {
+    for (const semilla of [1, 2, 3]) {
+      const { grafo, origen } = grande(semilla)
+      const p = prim(grafo, origen).resultado
+      const k = kruskal(grafo).resultado
+      expect(p.conexo).toBe(true)
+      expect(p.aristas).toHaveLength(199)
+      expect(k.aristas).toHaveLength(199)
+      expect(k.total).toBe(p.total)
+    }
+  })
+
+  it('Dijkstra devuelve una ruta válida y Ford-Fulkerson iguala flujo máximo y corte mínimo', () => {
+    for (const semilla of [1, 2, 3]) {
+      const { grafo, origen, destino } = grande(semilla)
+      const ruta = dijkstra(grafo, origen, destino).resultado
+      const pesos = new Map(grafo.aristas.map((a) => [a.id, a.peso]))
+      expect(ruta.ruta).not.toBeNull()
+      expect(ruta.aristasRuta.reduce((s, id) => s + pesos.get(id)!, 0)).toBe(ruta.distancia)
+      const flujo = fordFulkerson(grafo, origen, destino).resultado
+      expect(flujo.flujoMaximo).toBeGreaterThan(0)
+      expect(flujo.corte.capacidad).toBe(flujo.flujoMaximo)
+    }
   })
 })

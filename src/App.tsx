@@ -32,6 +32,9 @@ import {
 import { leerPeso, type GrafoPlano } from './parsers'
 import type { ClaseLeyenda, ClaveParametro, Ejecucion, Estrategia, Grafo, Parametros } from './types/graph'
 
+/** Hasta esta cantidad, los nodos cargados sin posición se dibujan en círculo. */
+const NODOS_EN_CIRCULO = 20
+
 const validarPeso = (v: string) => (leerPeso(v, true) === null ? 'Ingresá un número (ej: 3 o 2,5).' : null)
 
 function parametrosPorNombre(grafo: Grafo, porNombre: EjemploLibro['parametros']): Parametros {
@@ -216,7 +219,10 @@ export default function App() {
         ? desdePlano(plano, dirigido(plano.dirigido ?? g.dirigido))
         : desdePlano(plano, dirigido(g.dirigido), g),
     )
-    ajustarLuego()
+    // Un grafo grande sin posiciones no se lee en círculo: se acomoda solo.
+    const sinPosicion = plano.nodos.some((n) => n.x === undefined || n.y === undefined)
+    if (sinPosicion && plano.nodos.length > NODOS_EN_CIRCULO) requestAnimationFrame(() => canvas.current?.autoLayout())
+    else ajustarLuego()
   }
 
   const cargarEjemplo = (id: string) => {

@@ -251,7 +251,7 @@ export function GraphCanvas(props: Props) {
         elements={elementos}
         stylesheet={hojaEstilos}
         layout={{ name: 'preset' }}
-        minZoom={0.2}
+        minZoom={0.05}
         maxZoom={3}
         className="h-full w-full"
         cy={(cy) => {
