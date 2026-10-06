@@ -4,6 +4,7 @@ import { desdePlano } from '../lib/grafo'
 import { parsearTexto } from '../parsers'
 import type { Grafo, ResultadoArbol, ResultadoRuta } from '../types/graph'
 import { dijkstra, estrategia as estrategiaDijkstra } from './dijkstra'
+import { estrategia as estrategiaFlujo, fordFulkerson } from './fordFulkerson'
 import { estrategias } from './index'
 import { kruskal } from './kruskal'
 import { prim } from './prim'
@@ -24,8 +25,8 @@ const desdeTexto = (texto: string, dirigido = false): { grafo: Grafo; id: (n: st
 const pares = (r: ResultadoArbol) => r.aristas.map((a) => `${a.desde}-${a.hasta}`)
 
 describe('registro de estrategias', () => {
-  it('registra Prim, Kruskal y Dijkstra en orden', () => {
-    expect(Object.keys(estrategias)).toEqual(['prim', 'kruskal', 'dijkstra'])
+  it('registra Prim, Kruskal, Dijkstra y Ford-Fulkerson en orden', () => {
+    expect(Object.keys(estrategias)).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson'])
   })
 })
 
@@ -151,5 +152,86 @@ describe('Dijkstra: casos borde', () => {
     const r = dijkstra(grafo, id('A'), id('D')).resultado
     expect(r.distancia).toBe(2)
     expect(r.solucionesMultiples).toBe(true)
+  })
+})
+
+describe('Flujo máximo - Ford-Fulkerson', () => {
+  it('red de transmisión del apunte: S-A-T (8) y S-B-T (10), flujo máximo 18', () => {
+    const { grafo, id } = ejemplo('red-transmision')
+    const { resultado, pasos } = fordFulkerson(grafo, id('S'), id('T'))
+    expect(resultado.flujoMaximo).toBe(18)
+    expect(resultado.iteraciones.slice(1).map((it) => [it.camino.join('-'), it.cuello, it.flujoAcumulado])).toEqual([
+      ['S-A-T', 8, 8],
+      ['S-B-T', 10, 18],
+    ])
+    const flujos = Object.fromEntries(resultado.iteraciones.at(-1)!.arcos.map((a) => [`${a.desde}-${a.hasta}`, a.flujo]))
+    expect(flujos).toEqual({ 'S-A': 8, 'A-T': 8, 'A-B': 0, 'S-B': 10, 'B-T': 10 })
+    // inicio + 2 iteraciones (camino y aumento) + condición de parada + resultado
+    expect(pasos).toHaveLength(7)
+    expect(pasos[1].descripcion).toContain('k = min(10, 8) = 8')
+    expect(pasos.at(-1)!.etiquetasAristas![grafo.aristas[0].id]).toBe('8/10')
+  })
+
+  it('el corte mínimo tiene la misma capacidad que el flujo máximo', () => {
+    const { grafo, id } = ejemplo('red-transmision')
+    const { corte, flujoMaximo } = fordFulkerson(grafo, id('S'), id('T')).resultado
+    expect(corte.capacidad).toBe(flujoMaximo)
+    expect(corte.ladoFuente).toEqual(['S', 'A', 'B'])
+    expect(corte.arcos.map((a) => `${a.desde}-${a.hasta}`)).toEqual(['A-T', 'B-T'])
+  })
+
+  it('usa un arco inverso para corregir una asignación temprana', () => {
+    // El camino más corto S-A-B-T ocupa A→B; para llegar a 2 hay que deshacer ese flujo.
+    const { grafo, id } = desdeTexto('S A 1\nA B 1\nB T 1\nS C 1\nC B 1\nA D 1\nD E 1\nE T 1', true)
+    const { resultado, pasos } = fordFulkerson(grafo, id('S'), id('T'))
+    expect(resultado.flujoMaximo).toBe(2)
+    expect(resultado.iteraciones[2].camino).toEqual(['S', 'C', 'B', 'A', 'D', 'E', 'T'])
+    expect(pasos[3].descripcion).toContain('arco inverso')
+    expect(resultado.iteraciones.at(-1)!.arcos.find((a) => a.desde === 'A' && a.hasta === 'B')!.flujo).toBe(0)
+    expect(resultado.corte.capacidad).toBe(2)
+  })
+
+  it('cumple capacidad y conservación en cada nodo intermedio', () => {
+    const { grafo, id } = desdeTexto('S A 16\nS C 13\nA B 12\nC A 4\nB C 9\nC D 14\nD B 7\nB T 20\nD T 4', true)
+    const { resultado } = fordFulkerson(grafo, id('S'), id('T'))
+    expect(resultado.flujoMaximo).toBe(23)
+    const arcos = resultado.iteraciones.at(-1)!.arcos
+    for (const a of arcos) expect(a.flujo).toBeLessThanOrEqual(a.capacidad)
+    for (const n of ['A', 'B', 'C', 'D']) {
+      const suma = (lado: 'desde' | 'hasta') => arcos.filter((a) => a[lado] === n).reduce((s, a) => s + a.flujo, 0)
+      expect(suma('hasta')).toBe(suma('desde'))
+    }
+    expect(resultado.corte.capacidad).toBe(23)
+  })
+
+  it('en un grafo no dirigido cada arista sirve en los dos sentidos', () => {
+    const { grafo, id } = desdeTexto('A S 5\nT A 3\nB S 2\nB T 4')
+    const { resultado } = fordFulkerson(grafo, id('S'), id('T'))
+    expect(resultado.flujoMaximo).toBe(5)
+    expect(resultado.corte.capacidad).toBe(5)
+    expect(resultado.iteraciones.at(-1)!.arcos.map((a) => `${a.desde}-${a.hasta}:${a.flujo}`)).toEqual(['S-A:3', 'A-T:3', 'S-B:2', 'B-T:2'])
+  })
+
+  it('respeta el sentido de los arcos: sin camino el flujo es 0', () => {
+    const { grafo, id } = desdeTexto('A S 5\nA T 3', true)
+    const { resultado, pasos } = fordFulkerson(grafo, id('S'), id('T'))
+    expect(resultado.flujoMaximo).toBe(0)
+    expect(resultado.corte.arcos).toEqual([])
+    expect(pasos.at(-1)!.descripcion).toContain('el flujo máximo es 0')
+  })
+
+  it('no acumula errores de redondeo con capacidades decimales', () => {
+    const { grafo, id } = desdeTexto('S A 0.1\nS B 0.2\nA T 0.1\nB T 0.2', true)
+    expect(fordFulkerson(grafo, id('S'), id('T')).resultado.flujoMaximo).toBe(0.3)
+  })
+
+  it('valida fuente distinta del sumidero y capacidades no negativas', () => {
+    const { grafo, id } = desdeTexto('S A 4\nA T -2', true)
+    expect(estrategiaFlujo.validar(grafo, { origen: id('S'), destino: id('S') }).errores[0]).toContain('distintos')
+    expect(estrategiaFlujo.validar(grafo, { origen: id('S'), destino: id('T') }).errores[0]).toContain('negativas')
+    const noDirigido = { ...grafo, dirigido: false, aristas: grafo.aristas.slice(0, 1) }
+    const v = estrategiaFlujo.validar(noDirigido, { origen: id('S'), destino: id('A') })
+    expect(v.errores).toEqual([])
+    expect(v.advertencias[0]).toContain('no es dirigido')
   })
 })

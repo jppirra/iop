@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { Ejecucion, Paso, ResultadoArbol, ResultadoRuta } from '../types/graph'
+import type { Ejecucion, Paso, ResultadoArbol, ResultadoFlujo, ResultadoRuta } from '../types/graph'
 
 interface Props {
   ejecucion: Ejecucion
@@ -20,6 +20,7 @@ export function ResultsPanel({ ejecucion, indice, mostrarHistorial, onIr }: Prop
 
       {resultado.tipo === 'arbol' && <ResultadoArbolVista resultado={resultado} paso={paso} final={final} />}
       {resultado.tipo === 'ruta' && <ResultadoRutaVista resultado={resultado} paso={paso} final={final} />}
+      {resultado.tipo === 'flujo' && <ResultadoFlujoVista resultado={resultado} paso={paso} final={final} />}
 
       {mostrarHistorial && <Historial pasos={ejecucion.pasos} indice={indice} onIr={onIr} />}
     </div>
@@ -189,6 +190,111 @@ function ResultadoRutaVista({ resultado, paso, final }: { resultado: ResultadoRu
           </tbody>
         </table>
       </div>
+    </section>
+  )
+}
+
+function ResultadoFlujoVista({ resultado, paso, final }: { resultado: ResultadoFlujo; paso: Paso; final: boolean }) {
+  const hasta = Math.min(paso.iteracion ?? 0, resultado.iteraciones.length - 1)
+  const caminos = resultado.iteraciones.slice(1, hasta + 1)
+  const actual = resultado.iteraciones[hasta]
+  const { corte } = resultado
+  const enCorte = new Set(paso.aristasCorte)
+
+  return (
+    <section className="space-y-2">
+      {final && (
+        <Aviso tipo="ok">
+          <p className="font-medium">
+            Flujo máximo de {resultado.fuente} a {resultado.sumidero}: {resultado.flujoMaximo}
+          </p>
+          {resultado.flujoMaximo === 0 && <p>No hay ningún camino de la fuente al sumidero.</p>}
+        </Aviso>
+      )}
+
+      <h3 className="text-sm font-semibold text-slate-800">Caminos de aumento</h3>
+      <table className="tabla">
+        <thead>
+          <tr>
+            <th>It.</th>
+            <th>Camino</th>
+            <th className="text-right">Cuello (k)</th>
+            <th className="text-right">Acumulado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {caminos.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center text-slate-400">
+                Todavía no se envió flujo
+              </td>
+            </tr>
+          )}
+          {caminos.map((it) => (
+            <tr key={it.numero}>
+              <td className="text-slate-400">{it.numero}</td>
+              <td>{it.camino.join(' → ')}</td>
+              <td className="text-right tabular-nums">{it.cuello}</td>
+              <td className="text-right tabular-nums">{it.flujoAcumulado}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan={2}>{final ? 'Flujo máximo' : 'Flujo parcial'}</td>
+            <td colSpan={2} className="text-right tabular-nums">
+              {actual.flujoAcumulado}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <h3 className="pt-1 text-sm font-semibold text-slate-800">Flujo por arco</h3>
+      <p className="text-xs text-slate-500">Holgura = capacidad − flujo. Un arco con holgura 0 está saturado.</p>
+      <div className="max-h-72 overflow-auto rounded-md border border-slate-200">
+        <table className="tabla tabla-compacta">
+          <thead className="sticky top-0">
+            <tr>
+              <th>Arco</th>
+              <th className="text-right">Flujo / Cap.</th>
+              <th className="text-right">Holgura</th>
+            </tr>
+          </thead>
+          <tbody>
+            {actual.arcos.map((a) => {
+              const holgura = Math.round((a.capacidad - a.flujo) * 1e9) / 1e9
+              return (
+                <tr key={a.aristaId} className={enCorte.has(a.aristaId) ? 'bg-red-50 text-red-800' : a.flujo > 0 ? 'bg-green-50 text-green-800' : ''}>
+                  <td>
+                    {a.desde} → {a.hasta}
+                  </td>
+                  <td className="text-right tabular-nums">
+                    {a.flujo} / {a.capacidad}
+                  </td>
+                  <td className="text-right tabular-nums">{holgura === 0 ? '0 (lleno)' : holgura}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {enCorte.size > 0 && (
+        <Aviso tipo="aviso">
+          <p className="font-medium">Corte mínimo: capacidad {corte.capacidad}</p>
+          <p className="mt-1 text-xs">
+            Lado de la fuente: {'{'}
+            {corte.ladoFuente.join(', ')}
+            {'}'} · Lado del sumidero: {'{'}
+            {corte.ladoSumidero.join(', ')}
+            {'}'}
+          </p>
+          <p className="mt-1 text-xs">
+            Arcos que cruzan: {corte.arcos.map((a) => `${a.desde}→${a.hasta} (${a.capacidad})`).join(', ')}. Flujo máximo = capacidad del
+            corte mínimo.
+          </p>
+        </Aviso>
+      )}
     </section>
   )
 }

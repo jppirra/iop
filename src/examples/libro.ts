@@ -120,4 +120,28 @@ export const ejemplosLibro: EjemploLibro[] = [
       ],
     },
   },
+  {
+    id: 'red-transmision',
+    titulo: 'Red de transmisión',
+    referencia: 'Apunte Ford-Fulkerson · 4 nodos',
+    descripcion: 'Flujo máximo de S a T en una red dirigida (Mbps). Resultado: 8 + 10 = 18, igual al corte mínimo.',
+    estrategia: 'ford-fulkerson',
+    parametros: { origen: 'S', destino: 'T' },
+    grafo: {
+      dirigido: true,
+      nodos: [
+        { nombre: 'S', x: 90, y: 300 },
+        { nombre: 'A', x: 380, y: 140 },
+        { nombre: 'B', x: 380, y: 460 },
+        { nombre: 'T', x: 670, y: 300 },
+      ],
+      aristas: [
+        { origen: 'S', destino: 'A', peso: 10 },
+        { origen: 'A', destino: 'T', peso: 8 },
+        { origen: 'A', destino: 'B', peso: 2 },
+        { origen: 'S', destino: 'B', peso: 10 },
+        { origen: 'B', destino: 'T', peso: 10 },
+      ],
+    },
+  },
 ]

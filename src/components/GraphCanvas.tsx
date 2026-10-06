@@ -28,7 +28,7 @@ interface Props {
   onMover: (posiciones: Posiciones) => void
 }
 
-const CLASES_PASO = 'actual evaluada incluida descartada resultado'
+const CLASES_PASO = 'actual evaluada incluida descartada resultado corte'
 
 function estilos(dirigido: boolean, animaciones: boolean): StylesheetJson {
   const duracion = animaciones ? 350 : 0
@@ -89,6 +89,10 @@ function estilos(dirigido: boolean, animaciones: boolean): StylesheetJson {
       selector: 'edge.resultado',
       style: { 'line-color': '#2563eb', 'target-arrow-color': '#2563eb', 'line-style': 'solid', width: 5 },
     },
+    {
+      selector: 'edge.corte',
+      style: { 'line-color': '#dc2626', 'target-arrow-color': '#dc2626', 'line-style': 'dashed', width: 5, opacity: 1 },
+    },
     { selector: 'node.origen', style: { 'border-color': '#0d9488', 'border-width': 4, 'border-style': 'double' } },
     { selector: ':selected', style: { 'overlay-color': '#0ea5e9', 'overlay-opacity': 0.25, 'overlay-padding': 6 } },
   ]
@@ -106,7 +110,7 @@ export function GraphCanvas(props: Props) {
   const elementos = useMemo(
     () => [
       ...grafo.nodos.map((n) => ({ data: { id: n.id, label: n.nombre, ancho: Math.max(34, n.nombre.length * 8 + 18) }, position: { x: n.x, y: n.y } })),
-      ...grafo.aristas.map((a) => ({ data: { id: a.id, source: a.origen, target: a.destino, label: String(a.peso) } })),
+      ...grafo.aristas.map((a) => ({ data: { id: a.id, source: a.origen, target: a.destino, label: String(a.peso), peso: String(a.peso) } })),
     ],
     [grafo],
   )
@@ -183,6 +187,10 @@ export function GraphCanvas(props: Props) {
     if (!cy) return
     cy.batch(() => {
       cy.elements().removeClass(CLASES_PASO)
+      // Durante un paso la arista puede mostrar otro texto (flujo/capacidad) en lugar del peso.
+      cy.edges().forEach((a) => {
+        a.data('label', paso?.etiquetasAristas?.[a.id()] ?? a.data('peso'))
+      })
       if (!paso) return
       const marcar = (ids: string[] | undefined, clase: string) =>
         ids?.forEach((id) => cy.getElementById(id).addClass(clase))
@@ -192,6 +200,7 @@ export function GraphCanvas(props: Props) {
       marcar(paso.aristasEvaluadas, 'evaluada')
       marcar(paso.nodosActuales, 'actual')
       marcar(paso.aristasResultado, 'resultado')
+      marcar(paso.aristasCorte, 'corte')
       paso.aristasResultado?.forEach((id) => cy.getElementById(id).connectedNodes().addClass('resultado'))
     })
   }, [paso, elementos])

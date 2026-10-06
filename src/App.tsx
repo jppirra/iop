@@ -30,7 +30,7 @@ import {
   renombrarNodo,
 } from './lib/grafo'
 import { leerPeso, type GrafoPlano } from './parsers'
-import type { ClaveParametro, Ejecucion, Grafo, Parametros } from './types/graph'
+import type { ClaseLeyenda, ClaveParametro, Ejecucion, Estrategia, Grafo, Parametros } from './types/graph'
 
 const validarPeso = (v: string) => (leerPeso(v, true) === null ? 'Ingresá un número (ej: 3 o 2,5).' : null)
 
@@ -349,7 +349,7 @@ export default function App() {
                     />
                   </div>
                 )}
-                {verPasoAPaso && config.leyenda && <Leyenda />}
+                {verPasoAPaso && config.leyenda && <Leyenda textos={estrategia.leyenda} />}
               </>
             ) : (
               <BulkLoadPanel grafo={grafoEfectivo} mostrarExportar={config.exportar} onCargar={alCargar} />
@@ -454,13 +454,26 @@ export default function App() {
   )
 }
 
-function Leyenda() {
-  const items = [
-    ['bg-amber-400', 'Evaluado en este paso'],
-    ['bg-green-600', 'Incluido en la solución'],
-    ['bg-blue-600', 'Resultado final'],
-    ['bg-slate-300', 'Descartado (formaría ciclo)'],
-  ]
+const COLORES_LEYENDA: [ClaseLeyenda, string][] = [
+  ['evaluada', 'bg-amber-400'],
+  ['incluida', 'bg-green-600'],
+  ['resultado', 'bg-blue-600'],
+  ['descartada', 'bg-slate-300'],
+  ['corte', 'bg-red-600'],
+]
+
+const LEYENDA_GENERAL: NonNullable<Estrategia['leyenda']> = {
+  evaluada: 'Evaluado en este paso',
+  incluida: 'Incluido en la solución',
+  resultado: 'Resultado final',
+  descartada: 'Descartado (formaría ciclo)',
+}
+
+function Leyenda({ textos = LEYENDA_GENERAL }: { textos?: Estrategia['leyenda'] }) {
+  const items = COLORES_LEYENDA.flatMap(([clase, color]) => {
+    const texto = textos[clase]
+    return texto ? [[color, texto]] : []
+  })
   return (
     <div className="border-t border-slate-200 pt-4">
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Colores</p>

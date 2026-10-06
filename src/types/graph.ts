@@ -39,9 +39,13 @@ export interface Paso {
   aristasDescartadas: string[]
   /** Aristas del resultado final (ruta encontrada, etc.). */
   aristasResultado?: string[]
+  /** Aristas del corte mínimo (flujo máximo). */
+  aristasCorte?: string[]
+  /** Texto a mostrar sobre cada arista en lugar del peso (flujo/capacidad). Clave: id de arista. */
+  etiquetasAristas?: Record<string, string>
   /** Texto de aviso si hubo un empate en este paso. */
   empate?: string
-  /** Índice de iteración asociada (tabla de etiquetas de Dijkstra). */
+  /** Índice de iteración asociada (tabla de etiquetas de Dijkstra, flujo por arco de Ford-Fulkerson). */
   iteracion?: number
 }
 
@@ -89,8 +93,41 @@ export interface ResultadoRuta {
   detalleEmpates: string[]
 }
 
-/** Unión discriminada por `tipo`. Para Ford-Fulkerson/Floyd se suman variantes nuevas. */
-export type Resultado = ResultadoArbol | ResultadoRuta
+export interface ArcoFlujo {
+  aristaId: string
+  desde: string // nombre; el flujo va de `desde` a `hasta`
+  hasta: string // nombre
+  capacidad: number
+  flujo: number
+}
+
+export interface IteracionFlujo {
+  numero: number // 0 = estado inicial (sin flujo)
+  camino: string[] // nombres del camino de aumento
+  cuello: number // cuello de botella k
+  flujoAcumulado: number
+  /** Flujo de cada arco al terminar la iteración. */
+  arcos: ArcoFlujo[]
+}
+
+export interface CorteMinimo {
+  ladoFuente: string[] // nombres
+  ladoSumidero: string[] // nombres
+  arcos: { aristaId: string; desde: string; hasta: string; capacidad: number }[]
+  capacidad: number
+}
+
+export interface ResultadoFlujo {
+  tipo: 'flujo'
+  fuente: string // nombre
+  sumidero: string // nombre
+  flujoMaximo: number
+  iteraciones: IteracionFlujo[]
+  corte: CorteMinimo
+}
+
+/** Unión discriminada por `tipo`. Para Floyd/Bellman-Ford se suman variantes nuevas. */
+export type Resultado = ResultadoArbol | ResultadoRuta | ResultadoFlujo
 
 export interface Ejecucion<R extends Resultado = Resultado> {
   pasos: Paso[]
@@ -108,6 +145,9 @@ export interface Validacion {
   advertencias: string[]
 }
 
+/** Colores con los que se resalta un paso sobre el grafo. */
+export type ClaseLeyenda = 'evaluada' | 'incluida' | 'resultado' | 'descartada' | 'corte'
+
 export interface Estrategia {
   id: string
   nombre: string
@@ -118,6 +158,8 @@ export interface Estrategia {
   parametros: { clave: ClaveParametro; etiqueta: string }[]
   /** Prim y Kruskal trabajan siempre sobre el grafo no dirigido. */
   forzarNoDirigido?: boolean
+  /** Textos de la leyenda de colores, si no sirven los generales. */
+  leyenda?: Partial<Record<ClaseLeyenda, string>>
   validar(grafo: Grafo, parametros: Parametros): Validacion
   ejecutar(grafo: Grafo, parametros: Parametros): Ejecucion
 }

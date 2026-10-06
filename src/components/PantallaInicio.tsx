@@ -117,5 +117,5 @@ export function PantallaInicio({ estrategias, modos, mostrarEjemplos, estrategia
 }
 
 function columnas(n: number) {
-  return n >= 3 ? 'sm:grid-cols-3' : n === 2 ? 'sm:grid-cols-2' : 'grid-cols-1'
+  return n === 3 || n > 4 ? 'sm:grid-cols-3' : n > 1 ? 'sm:grid-cols-2' : 'grid-cols-1'
 }

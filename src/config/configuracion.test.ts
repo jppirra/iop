@@ -17,7 +17,7 @@ const todas = listaEstrategias
 describe('configuración', () => {
   it('por defecto muestra todo', () => {
     const c = configPorDefecto(todas)
-    expect(c.estrategias).toEqual(['prim', 'kruskal', 'dijkstra'])
+    expect(c.estrategias).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson'])
     expect(permiteDirigido(c, todas)).toBe(true)
   })
 
@@ -42,6 +42,11 @@ describe('configuración', () => {
     for (const clave of Object.keys(archivoConfig)) expect(proyecto).toHaveProperty(clave)
   })
 
+  it('un algoritmo que no figura en config.json queda oculto hasta habilitarlo', () => {
+    const c = normalizar({ estrategias: ['prim', 'dijkstra'] }, todas)
+    expect(estrategiasVisibles(c, todas).map((e) => e.id)).toEqual(['prim', 'dijkstra'])
+  })
+
   it('sin localStorage (o sin cambios locales) se usa la configuración del proyecto', () => {
     expect(leerConfig(todas)).toEqual(configDelProyecto(todas))
   })
@@ -60,6 +65,6 @@ describe('configuración', () => {
   })
 
   it('nunca deja la lista de estrategias vacía', () => {
-    expect(normalizar({ estrategias: [] }, todas).estrategias).toEqual(['prim', 'kruskal', 'dijkstra'])
+    expect(normalizar({ estrategias: [] }, todas).estrategias).toEqual(['prim', 'kruskal', 'dijkstra', 'ford-fulkerson'])
   })
 })
