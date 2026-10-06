@@ -29,9 +29,9 @@ flowchart TB
     end
 
     subgraph dominio["Dominio (sin React)"]
-        algorithms["algorithms/<br/>prim · kruskal"]
+        algorithms["algorithms/ (prim, kruskal)"]
         libGrafo["lib/grafo.ts"]
-        parsers["parsers/<br/>texto · csv · json"]
+        parsers["parsers/ (texto, csv, json)"]
         aleatorio["lib/aleatorio.ts"]
     end
 
