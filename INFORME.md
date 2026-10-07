@@ -125,7 +125,6 @@ CPM y PERT siguen el mismo esquema que los cuatro anteriores (una función que d
 
 1. Confirmar con la cátedra la convención de CPM y PERT (se usó actividad en el arco) y probarlos con ejercicios resueltos en clase.
 2. Evaluar si conviene poder ponerle nombre a cada actividad (A, B, C…) además de identificarla por sus eventos.
-3. Actualizar la documentación técnica (carpeta `docs/`) con Dijkstra, flujo máximo, CPM y PERT.
-4. Probar la aplicación con los grafos que entreguen las docentes, incluido uno de 200 nodos.
-5. Ensayar la demostración con grafos nuevos y con cambios de datos en vivo.
-6. Repartir entre los integrantes la explicación de cada algoritmo y de las decisiones técnicas.
+3. Probar la aplicación con los grafos que entreguen las docentes, incluido uno de 200 nodos.
+4. Ensayar la demostración con grafos nuevos y con cambios de datos en vivo.
+5. Repartir entre los integrantes la explicación de cada algoritmo y de las decisiones técnicas.

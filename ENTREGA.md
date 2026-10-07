@@ -310,8 +310,7 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 ## 7. Pendientes antes de la entrega
 
 1. **Confirmar la convención de CPM y PERT con lo visto en clase.** Se implementó actividad en el arco. Si la cátedra trabaja con actividad en el nodo, los resultados (duración, holguras, ruta crítica) son los mismos, pero el grafo se dibuja distinto.
-2. **Actualizar la carpeta [docs/](docs/).** Describe solo Prim y Kruskal; no menciona Dijkstra, Flujo máximo, CPM ni PERT.
-3. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
+2. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
 
 ---
 
@@ -321,5 +320,5 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 | --- | --- |
 | [README.md](README.md) | Instalación, uso, formatos de carga, configuración. |
 | [MANUAL.md](MANUAL.md) | Cada algoritmo en nivel funcional y técnico, con trazas, referencias a líneas de código y qué pasa si se modifica cada parte. |
-| [docs/](docs/) | Arquitectura, casos de uso y diagramas de componentes y de secuencia (hoy solo Prim y Kruskal). |
+| [docs/](docs/) | Visión general, arquitectura, algoritmos, casos de uso y diagramas de componentes y de secuencia. |
 | [Lib/](Lib/) | Consigna del TPI y material de la cátedra usado. |
