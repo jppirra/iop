@@ -120,11 +120,3 @@ Estado actual:
 - **Sin comenzar:** nada de lo pedido en la consigna.
 
 CPM y PERT siguen el mismo esquema que los cuatro anteriores (una función que devuelve pasos y resultado, más su tabla) y comparten el cálculo de la red: solo cambia cómo se obtiene la duración de cada actividad.
-
-## 7. Pasos pendientes para futuras clases
-
-1. Confirmar con la cátedra la convención de CPM y PERT (se usó actividad en el arco) y probarlos con ejercicios resueltos en clase.
-2. Evaluar si conviene poder ponerle nombre a cada actividad (A, B, C…) además de identificarla por sus eventos.
-3. Probar la aplicación con los grafos que entreguen las docentes, incluido uno de 200 nodos.
-4. Ensayar la demostración con grafos nuevos y con cambios de datos en vivo.
-5. Repartir entre los integrantes la explicación de cada algoritmo y de las decisiones técnicas.
