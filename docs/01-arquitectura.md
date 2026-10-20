@@ -36,6 +36,8 @@ src/
     ConfigPage.tsx        Pantalla /config
   informe/
     InformePage.tsx       Pantalla /informe: muestra INFORME.md y lo exporta a Word
+  presentacion/
+    PresentacionPage.tsx  Pantalla /presentacion: diapositivas del trabajo, con links a cada modelo
   hooks/
     useHistorial.ts       Estado genérico con historial (deshacer)
   components/
@@ -49,7 +51,7 @@ src/
     DialogoEntrada.tsx       Diálogo genérico (nombre de nodo, peso de arista…)
     IntegrantesDialog.tsx    Modal con la lista de integrantes
   App.tsx                 Orquesta todo lo anterior (estado principal de la app)
-  main.tsx                Punto de entrada y ruteo mínimo (/, /config, /informe)
+  main.tsx                Punto de entrada y ruteo mínimo (/, /config, /informe, /presentacion)
 ```
 
 ## Representación interna del grafo
@@ -267,8 +269,16 @@ mover) pasa por `aplicar(fn)`, que calcula el nuevo estado y lo apila.
 
 `main.tsx` hace un ruteo mínimo por la URL, sin librería: `/config` muestra la
 pantalla de configuración, `/informe` muestra `INFORME.md` con el estilo de la
-app (y permite descargarlo en Word o imprimirlo), y cualquier otra ruta
-muestra la app. Ninguna de las dos pantallas tiene enlace desde la app.
+app (y permite descargarlo en Word o imprimirlo), `/presentacion` es la
+presentación introductoria del trabajo (una diapositiva por modelo, con quién
+la presenta) y cualquier otra ruta muestra la app. Ninguna de esas pantallas
+tiene enlace desde la app.
+
+**Links directos a un modelo.** La app lee dos parámetros de la URL al abrir:
+`algoritmo` (id de la estrategia) y `ejemplo` (id de un ejemplo de
+`examples/libro.ts`). Por ejemplo `/?algoritmo=kruskal&ejemplo=lauderdale`
+abre Kruskal con el ejemplo de Lauderdale cargado y sin pantalla de inicio. La
+presentación usa estos links en cada diapositiva de modelo.
 
 ## Cómo se verifica la corrección de los resultados
 

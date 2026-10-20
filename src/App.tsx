@@ -47,6 +47,15 @@ const validarPeso = (v: string) => {
   return typeof leido === 'string' ? leido : null
 }
 
+/**
+ * Link directo a un modelo (lo usa /presentacion): /?algoritmo=prim&ejemplo=lauderdale abre la app con ese
+ * algoritmo elegido y ese ejemplo del libro cargado, sin pasar por la pantalla de inicio.
+ */
+const LINK_DIRECTO = (() => {
+  const url = new URLSearchParams(window.location.search)
+  return { algoritmo: url.get('algoritmo'), ejemplo: url.get('ejemplo') }
+})()
+
 function parametrosPorNombre(grafo: Grafo, porNombre: EjemploLibro['parametros']): Parametros {
   const id = (nombre?: string) => grafo.nodos.find((n) => n.nombre === nombre)?.id
   return Object.fromEntries(Object.entries(porNombre).map(([clave, nombre]) => [clave, id(nombre)]))
@@ -62,7 +71,9 @@ export default function App() {
   const [reproduciendo, setReproduciendo] = useState(false)
   const [velocidad, setVelocidad] = useState<Velocidad>('normal')
   const [pestana, setPestana] = useState<'ejecutar' | 'carga'>('ejecutar')
-  const [inicio, setInicio] = useState<'primera' | 'abierta' | 'cerrada'>(config.pantallaInicio ? 'primera' : 'cerrada')
+  const [inicio, setInicio] = useState<'primera' | 'abierta' | 'cerrada'>(() =>
+    config.pantallaInicio && !LINK_DIRECTO.algoritmo && !LINK_DIRECTO.ejemplo ? 'primera' : 'cerrada',
+  )
   const [verIntegrantes, setVerIntegrantes] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
   const canvas = useRef<CanvasApi>(null)
@@ -267,6 +278,16 @@ export default function App() {
     setPestana(modo === 'masiva' ? 'carga' : 'ejecutar')
     if (modo === 'manual') avisar('Doble click en el lienzo para crear el primer nodo.')
   }
+
+  // El ejemplo se carga primero porque elige su propia estrategia; el algoritmo del link tiene la última palabra.
+  const linkAplicado = useRef(false)
+  useEffect(() => {
+    if (linkAplicado.current) return
+    linkAplicado.current = true
+    const { algoritmo, ejemplo } = LINK_DIRECTO
+    if (ejemplo) cargarEjemplo(ejemplo)
+    if (algoritmo && visibles.some((e) => e.id === algoritmo)) setEstrategiaId(algoritmo)
+  }, []) // Solo al abrir la app.
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 lg:h-screen">
