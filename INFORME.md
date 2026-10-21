@@ -10,7 +10,7 @@ Este comentario no se ve al exportar el documento.
 **Investigación Operativa · UTN · Grupo 3 — IOP 2026**
 Junco Paola (43516) · Hernandez Lucas Adriel (51895) · Moreno Pablo (51452) · Pirra Juan Pablo (54051) · Schneider Christian (52682) · Vanzo David (48463)
 
-Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.000.006
+Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.001.013
 
 ## 1. Algoritmos
 
