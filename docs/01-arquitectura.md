@@ -49,7 +49,7 @@ src/
     BulkLoadPanel.tsx        Pestaña de carga masiva (texto/CSV/JSON) + exportar
     PantallaInicio.tsx       Pantalla inicial (elegir algoritmo y modo de carga)
     DialogoEntrada.tsx       Diálogo genérico (nombre de nodo, peso de arista…)
-    IntegrantesDialog.tsx    Modal con la lista de integrantes
+    IntegrantesDialog.tsx    Modal con la lista de integrantes y botones a /presentacion e /informe
   App.tsx                 Orquesta todo lo anterior (estado principal de la app)
   main.tsx                Punto de entrada y ruteo mínimo (/, /config, /informe, /presentacion)
 ```
@@ -271,8 +271,9 @@ mover) pasa por `aplicar(fn)`, que calcula el nuevo estado y lo apila.
 pantalla de configuración, `/informe` muestra `INFORME.md` con el estilo de la
 app (y permite descargarlo en Word o imprimirlo), `/presentacion` es la
 presentación introductoria del trabajo (una diapositiva por modelo, con quién
-la presenta) y cualquier otra ruta muestra la app. Ninguna de esas pantallas
-tiene enlace desde la app.
+la presenta) y cualquier otra ruta muestra la app. `/informe` y
+`/presentacion` se abren desde el panel de integrantes; `/config` no tiene
+enlace desde la app.
 
 **Links directos a un modelo.** La app lee dos parámetros de la URL al abrir:
 `algoritmo` (id de la estrategia) y `ejemplo` (id de un ejemplo de

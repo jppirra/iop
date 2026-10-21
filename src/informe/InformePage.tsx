@@ -42,7 +42,7 @@ function descargarWord(html: string) {
 
 /**
  * Pantalla /informe: muestra INFORME.md (raíz del repo) con el estilo de la app.
- * No hay enlaces a ella desde la app. Para cambiar el contenido se edita el .md.
+ * Se abre desde el panel de integrantes. Para cambiar el contenido se edita el .md.
  */
 export function InformePage() {
   const html = useMemo(() => marked.parse(sinComentarios(textoInforme), { async: false }), [])

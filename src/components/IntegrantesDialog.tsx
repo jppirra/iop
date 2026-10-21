@@ -34,7 +34,13 @@ export function IntegrantesDialog({ onCerrar }: { onCerrar: () => void }) {
             ))}
           </tbody>
         </table>
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+          <a href="/presentacion" target="_blank" rel="noreferrer" className="btn">
+            Presentación ↗
+          </a>
+          <a href="/informe" target="_blank" rel="noreferrer" className="btn">
+            Informe ↗
+          </a>
           <button className="btn btn-primario" onClick={onCerrar} autoFocus>
             Cerrar
           </button>
