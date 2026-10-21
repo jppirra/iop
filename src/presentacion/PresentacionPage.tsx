@@ -22,6 +22,8 @@ interface Modelo {
   pasos: string[]
   enLaApp: string[]
   ejemplo: { titulo: string; resultado: string }
+  /** Algo para comentar aparte en la presentación (por ejemplo, una decisión acordada con la cátedra). */
+  nota?: { titulo: string; texto: string }
   /** Links directos a la app: abren el algoritmo con el ejemplo ya cargado. */
   links: { texto: string; url: string }[]
 }
@@ -118,6 +120,11 @@ const MODELOS: Modelo[] = [
       'Resalta la ruta crítica (o las rutas, si hay más de una).',
     ],
     ejemplo: { titulo: 'General Foundry (Render, cap. 12)', resultado: '15 semanas. Ruta crítica A-C-E-G-H.' },
+    nota: {
+      titulo: 'Convención acordada con la cátedra',
+      texto:
+        'Usamos actividad en el arco: cada arco es una actividad y cada nodo, un evento (en General Foundry, la actividad C es el arco 2 → 4). Se lo consultamos a las profesoras: se aceptan las dos convenciones, en el arco o en el nodo, y los casos de prueba los van a dar en nuestro formato de carga masiva.',
+    },
     links: [{ texto: 'Abrir CPM con General Foundry', url: '/?algoritmo=cpm&ejemplo=general-foundry-cpm' }],
   },
   {
@@ -138,6 +145,11 @@ const MODELOS: Modelo[] = [
     ejemplo: {
       titulo: 'General Foundry (Render, cap. 12)',
       resultado: '15 semanas esperadas, varianza 3,11. P(terminar en 16 semanas) ≈ 71,5 %.',
+    },
+    nota: {
+      titulo: 'Convención acordada con la cátedra',
+      texto:
+        'La misma que CPM: actividad en el arco, con los tres tiempos en cada arco. La cátedra acepta esta convención y va a dar los casos de prueba en nuestro formato de carga masiva.',
     },
     links: [{ texto: 'Abrir PERT con General Foundry', url: '/?algoritmo=pert&ejemplo=general-foundry-pert' }],
   },
@@ -380,6 +392,12 @@ function DiapositivaModelo({ modelo, numero }: { modelo: Modelo; numero: number 
       <p className="mb-5 text-lg text-slate-700">
         <strong className="text-slate-900">Problema:</strong> {modelo.problema}
       </p>
+      {modelo.nota && (
+        <div className="mb-5 rounded-xl border-l-4 border-amber-500 bg-amber-50 p-4 text-amber-950">
+          <p className="text-sm font-semibold">{modelo.nota.titulo}</p>
+          <p>{modelo.nota.texto}</p>
+        </div>
+      )}
       <div className="grid gap-4 md:grid-cols-2">
         <Tarjeta titulo="Cómo funciona">
           <Lista items={modelo.pasos} numerada />

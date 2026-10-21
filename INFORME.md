@@ -1,9 +1,7 @@
 <!--
 BORRADOR PARA EDITAR ENTRE TODOS. Límite: 4 páginas.
 Revisar antes de entregar:
-- Sección 1: CPM y PERT se implementaron con actividad en el arco; confirmar que es la convención que se vio en clase.
 - Sección 4: las alternativas descartadas son las técnicamente razonables; ajustar a lo que el grupo realmente comparó.
-- Sección 7: ordenar los pendientes según las clases que quedan y poner responsables.
 Este comentario no se ve al exportar el documento.
 -->
 
@@ -41,7 +39,7 @@ Los algoritmos a implementar son los seis de la consigna. Los seis ya funcionan 
 - Prim y Kruskal tratan todo grafo como **no dirigido**. Si el grafo no es conexo, devuelven el árbol parcial y avisan qué nodos quedaron afuera.
 - Dijkstra se detiene al fijar el destino y **bloquea los pesos negativos** antes de ejecutar.
 - En Ford-Fulkerson el camino se busca **en anchura (BFS)**, lo que garantiza que termine. Además se informa el **corte mínimo** y se admite grafo no dirigido.
-- En CPM y PERT cada **actividad es un arco** y cada nodo un evento, así se cargan como cualquier otro grafo. El inicio y el fin del proyecto se deducen de la red, y se detectan los ciclos antes de ejecutar.
+- En CPM y PERT cada **actividad es un arco** y cada nodo un evento, así se cargan como cualquier otro grafo. La cátedra aceptó esta convención (también era válida la de actividad en el nodo). El inicio y el fin del proyecto se deducen de la red, y se detectan los ciclos antes de ejecutar.
 - Para PERT la arista admite **tres tiempos** (optimista, más probable y pesimista), y el plazo para calcular la probabilidad se ingresa sobre el resultado, sin volver a ejecutar.
 
 ## 2. Ingreso de datos
