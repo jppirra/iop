@@ -118,6 +118,7 @@ const MODELOS: Modelo[] = [
       'El grafo se trata siempre como dirigido y se valida que no tenga ciclos.',
       'Tabla con tiempos y holgura de cada actividad.',
       'Resalta la ruta crítica (o las rutas, si hay más de una).',
+      'Actividades paralelas (mismo inicio y fin): con un nombre cada una, la app agrega sola el evento intermedio y la ficticia de duración 0.',
     ],
     ejemplo: { titulo: 'General Foundry (Render, cap. 12)', resultado: '15 semanas. Ruta crítica A-C-E-G-H.' },
     nota: {
@@ -337,7 +338,7 @@ function Verificacion() {
         </Tarjeta>
         <Tarjeta titulo="Propiedades sobre grafos de 200 nodos">
           Flujo máximo = corte mínimo, ningún arco supera su capacidad, la ruta crítica suma la duración, ninguna holgura es
-          negativa.
+          negativa. Un grafo completo de 200 nodos (19.900 aristas) se carga en menos de medio segundo.
         </Tarjeta>
         <Tarjeta titulo="Casos borde">
           Grafo no conexo, empates, varias soluciones óptimas, pesos negativos, sin ruta, ciclos en un proyecto, varias rutas

@@ -191,7 +191,11 @@ sequenceDiagram
     BLP->>Parsers: detectarFormato(texto, nombreArchivo)
     Parsers-->>BLP: texto, csv o json
     BLP->>Parsers: parsear(texto, formato)
-    Parsers-->>BLP: grafo plano o lista de errores
+    Parsers-->>BLP: grafo plano (con dirigido= si el archivo lo declara) o lista de errores
+    opt el archivo no declara dirigido=
+        BLP->>Parsers: erroresDireccion(grafoPlano, opción de la pantalla)
+        Parsers-->>BLP: errores A→B / B→A si la red queda no dirigida
+    end
 
     alt hay errores de formato
         BLP-->>U: lista de errores por línea
@@ -200,9 +204,10 @@ sequenceDiagram
         U->>BLP: click "Reemplazar" o "Agregar"
         BLP->>App: onCargar(grafoPlano, modo)
         App->>LibGrafo: desdePlano(grafoPlano, dirigido, baseSiAgregar)
-        LibGrafo-->>App: nuevo Grafo (con ids, fusionando por nombre)
+        LibGrafo-->>App: nuevo Grafo (con ids, fusionando por nombre, actividades paralelas con evento intermedio)
         App->>App: aplicar(nuevoGrafo) - historial
-        alt más de 20 nodos sin posición
+        App-->>U: aviso "Red cargada como dirigida / no dirigida"
+        alt más de 30 nodos sin posición
             App->>GC: autoLayout()
         else grafo chico o con posiciones
             App->>GC: ajustar()

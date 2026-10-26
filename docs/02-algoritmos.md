@@ -58,8 +58,8 @@ mientras |conectados| < |nodos|:
   **empatadas** en el mínimo (las que de verdad compitieron), no todas las
   candidatas del corte — en un grafo denso `candidatas` puede ser casi tan
   grande como `aristas`, y repetirla en cada paso pesaba mucho (un grafo
-  completo de 200 nodos llegaba a ~23 MB de pasos; con este cambio queda por
-  debajo de 0,5 MB) sin cambiar el árbol, el total ni los avisos de empate.
+  completo de 200 nodos llegaba a ~22 MB de pasos; con este cambio queda por
+  debajo de 1 MB) sin cambiar el árbol, el total ni los avisos de empate.
 
 ### Parámetros y validación
 
@@ -254,7 +254,7 @@ corte := aristas que van de un nodo alcanzado en el último BFS a uno no alcanza
   `etiquetasAristas` (flujo/capacidad de **todas** las aristas): esa foto
   completa se guarda una sola vez por iteración en `resultado.iteraciones`, y
   `GraphCanvas` la deriva de `iteraciones[paso.iteracion]` al dibujar. En una
-  red de ~1.300 arcos esto bajaba de ~4,4 MB a menos de 3 MB sin cambiar lo
+  red de ~1.300 arcos esto bajaba de ~4,4 MB a ~0,2 MB sin cambiar lo
   que se ve en el lienzo ni en el panel de resultados.
 
 ### Parámetros y validación

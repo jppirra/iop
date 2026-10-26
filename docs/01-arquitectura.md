@@ -287,13 +287,18 @@ destino, p. ej. `2'`, sin chocar con nodos existentes) y una actividad
 ficticia de duración 0 hacia el destino real — el mismo truco que a mano.
 `actividad` se exporta en CSV y JSON.
 
+Solo cuentan como paralelas las aristas del **mismo** archivo: si se usa
+"Agregar al grafo" y el archivo trae una arista que ya existía en el lienzo,
+`desdePlano` actualiza su peso (como siempre) en lugar de crear un evento
+intermedio.
+
 ### Rendimiento e interfaz
 
 `desdePlano` indexa las aristas existentes por clave (`Map`, O(1) por
 arista) en vez de recorrerlas con `findIndex` en cada iteración: un grafo
-completo de 200 nodos (19.900 aristas) se parsea y convierte en menos de 500
-ms (antes, con el `findIndex` original, tardaba más de 1,5 s solo en
-`desdePlano`).
+completo de 200 nodos (19.900 aristas) se parsea y convierte en unos 50 ms
+(antes, con el `findIndex` original, tardaba más de un segundo). El test pide
+menos de 500 ms para dejar margen en máquinas lentas.
 
 Si la carga trae más de 30 nodos sin posición, `App.tsx` dispara el
 auto-layout del lienzo en lugar de ubicarlos en círculo, para que un grafo
@@ -395,4 +400,4 @@ explicarlos:
   dice cuánto dura cada actividad: CPM pasa el peso, PERT el tiempo esperado.
   Todo lo demás (orden topológico, recorridos, holguras) es común.
 - **Grafos grandes.** Un grafo de 200 nodos ubicado en círculo es ilegible;
-  la carga masiva dispara el auto-layout a partir de 20 nodos.
+  la carga masiva dispara el auto-layout con más de 30 nodos.

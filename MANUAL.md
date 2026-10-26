@@ -66,12 +66,12 @@ Definidos en [graph.ts](src/types/graph.ts).
 | Tipo | Qué es | Detalle importante |
 | --- | --- | --- |
 | `Nodo` | `id`, `nombre`, `x`, `y` | El `id` es interno y no cambia; el `nombre` es lo que ve el usuario. Los algoritmos trabajan con `id` y traducen a `nombre` solo para los textos. |
-| `Arista` | `id`, `origen`, `destino`, `peso` y, opcionales, `optimista` y `pesimista` | `origen`/`destino` son ids de nodo. En un grafo no dirigido el orden origen/destino no importa. Los tiempos `optimista` y `pesimista` solo los usa PERT (el `peso` es el más probable). |
+| `Arista` | `id`, `origen`, `destino`, `peso` y, opcionales, `optimista`, `pesimista`, `actividad` y `ficticia` | `origen`/`destino` son ids de nodo. En un grafo no dirigido el orden origen/destino no importa. Los tiempos `optimista` y `pesimista` solo los usa PERT (el `peso` es el más probable). `actividad` es el nombre de la actividad en CPM/PERT (se muestra en la tabla en lugar de `desde→hasta`) y `ficticia` marca la actividad de duración 0 que se agrega al cargar actividades paralelas (ver [7.1](#71-nivel-funcional)). |
 | `Grafo` | `dirigido`, `nodos[]`, `aristas[]` | El **orden** de `nodos` y `aristas` es el orden de carga, y es el que desempata. |
 | `Paso` | Una "foto" de la ejecución | Ver tabla siguiente. |
 | `Resultado` | `ResultadoArbol`, `ResultadoRuta`, `ResultadoFlujo` o `ResultadoProyecto` | Unión discriminada por `tipo` (`'arbol'` / `'ruta'` / `'flujo'` / `'proyecto'`). |
 
-Campos de un `Paso` ([graph.ts:30-53](src/types/graph.ts#L30-L53)) y cómo se ven:
+Campos de un `Paso` ([graph.ts:34-57](src/types/graph.ts#L34-L57)) y cómo se ven:
 
 | Campo | Significado | Color en el grafo |
 | --- | --- | --- |
@@ -82,17 +82,17 @@ Campos de un `Paso` ([graph.ts:30-53](src/types/graph.ts#L30-L53)) y cómo se ve
 | `aristasDescartadas` | Aristas rechazadas (ciclo) | Gris punteado |
 | `aristasResultado` | Solución final | Azul |
 | `aristasCorte` | Arcos del corte mínimo (solo Ford-Fulkerson) | Rojo punteado |
-| `etiquetasAristas` | Texto que reemplaza al peso sobre cada arista: `flujo/capacidad` en Ford-Fulkerson, tiempo esperado en PERT | — (cambia el número de la arista) |
+| `etiquetasAristas` | Texto que reemplaza al peso sobre cada arista: tiempo esperado en PERT | — (cambia el número de la arista) |
 | `empate` | Aviso de empate | Cartel amarillo |
 | `iteracion` | Fila de la tabla de etiquetas (Dijkstra), estado del flujo por arco (Ford-Fulkerson) o cantidad de eventos calculados (CPM y PERT) | — |
 
-El pintado está en [GraphCanvas.tsx:185-207](src/components/GraphCanvas.tsx#L185-L207). Si una arista cae en dos listas a la vez gana la regla que está **más abajo** en la hoja de estilos ([GraphCanvas.tsx:77-97](src/components/GraphCanvas.tsx#L77-L97)): descartada < evaluada < incluida < resultado < corte. Por eso la arista recién elegida se ve verde aunque también figure como "evaluada", y un arco del corte mínimo se ve rojo aunque también lleve flujo.
+El pintado está en [GraphCanvas.tsx:195-223](src/components/GraphCanvas.tsx#L195-L223). Si una arista cae en dos listas a la vez gana la regla que está **más abajo** en la hoja de estilos ([GraphCanvas.tsx:84-104](src/components/GraphCanvas.tsx#L84-L104)): descartada < evaluada < incluida < resultado < corte. Por eso la arista recién elegida se ve verde aunque también figure como "evaluada", y un arco del corte mínimo se ve rojo aunque también lleve flujo.
 
-En el mismo efecto se cambia el texto de cada arista ([GraphCanvas.tsx:191-194](src/components/GraphCanvas.tsx#L191-L194)): si el paso trae `etiquetasAristas` se muestra ese texto; si no (o si no hay ejecución vigente) vuelve el peso.
+En el mismo efecto se cambia el texto de cada arista ([GraphCanvas.tsx:201-210](src/components/GraphCanvas.tsx#L201-L210)): en Ford-Fulkerson se muestra `flujo/capacidad`, que se arma con la foto `resultado.iteraciones[paso.iteracion]` (los pasos no guardan una copia propia, para no repetir un texto por arista en cada paso); si no, se muestra `etiquetasAristas` del paso si lo trae (PERT); si no (o si no hay ejecución vigente) vuelve el peso.
 
 ### 2.2 El contrato `Estrategia`
 
-Cada modelo exporta un objeto `estrategia` ([graph.ts:186-202](src/types/graph.ts#L186-L202)) con:
+Cada modelo exporta un objeto `estrategia` ([graph.ts:194-210](src/types/graph.ts#L194-L210)) con:
 
 | Campo | Para qué sirve |
 | --- | --- |
@@ -114,11 +114,11 @@ Que esté registrado no significa que se vea: solo se muestran las estrategias c
 
 Todo en [App.tsx](src/App.tsx):
 
-1. **Grafo efectivo** ([App.tsx:80-84](src/App.tsx#L80-L84)): si la estrategia tiene `forzarNoDirigido` (Prim, Kruskal), o la configuración no permite dirigidos, se pasa una copia con `dirigido: false`; si tiene `forzarDirigido` (CPM, PERT), con `dirigido: true`. El grafo original no se toca.
-2. **Parámetros efectivos** ([App.tsx:87-95](src/App.tsx#L87-L95)): si el usuario no eligió nodo, o el nodo elegido fue borrado, se usa uno por defecto: el **primer** nodo para `inicio`/`origen` y el **último** para `destino`.
-3. **Validación** ([App.tsx:97-100](src/App.tsx#L97-L100)): se recalcula en cada cambio; con errores, los botones quedan deshabilitados.
-4. **Ejecución** ([App.tsx:151-158](src/App.tsx#L151-L158)): guarda `{ clave, datos }`, donde `clave` identifica con qué estrategia, parámetros y grafo se calculó.
-5. **Vigencia** ([App.tsx:103-107](src/App.tsx#L103-L107)): el resultado solo se muestra mientras la clave actual coincida con la guardada. Ver [sección 9.1](#91-usando-la-app).
+1. **Grafo efectivo** ([App.tsx:91-95](src/App.tsx#L91-L95)): si la estrategia tiene `forzarNoDirigido` (Prim, Kruskal), o la configuración no permite dirigidos, se pasa una copia con `dirigido: false`; si tiene `forzarDirigido` (CPM, PERT), con `dirigido: true`. El grafo original no se toca.
+2. **Parámetros efectivos** ([App.tsx:97-106](src/App.tsx#L97-L106)): si el usuario no eligió nodo, o el nodo elegido fue borrado, se usa uno por defecto: el **primer** nodo para `inicio`/`origen` y el **último** para `destino`.
+3. **Validación** ([App.tsx:108-111](src/App.tsx#L108-L111)): se recalcula en cada cambio; con errores, los botones quedan deshabilitados.
+4. **Ejecución** ([App.tsx:162-169](src/App.tsx#L162-L169)): guarda `{ clave, datos }`, donde `clave` identifica con qué estrategia, parámetros y grafo se calculó.
+5. **Vigencia** ([App.tsx:113-118](src/App.tsx#L113-L118)): el resultado solo se muestra mientras la clave actual coincida con la guardada. Ver [sección 9.1](#91-usando-la-app).
 
 ### 2.4 Utilidades compartidas
 
@@ -156,7 +156,7 @@ En [utils.ts](src/algorithms/utils.ts):
 - Distancia total mínima.
 - Avisos: empate en un paso, soluciones óptimas múltiples, grafo no conexo.
 
-**Qué se ve en cada paso.** En naranja, todas las aristas candidatas que se compararon; en verde, lo ya conectado; el nodo recién conectado resaltado.
+**Qué se ve en cada paso.** En naranja, las candidatas que empataron en la menor distancia (si no hubo empate, solo la elegida); en verde, lo ya conectado; el nodo recién conectado resaltado. No se pintan todas las candidatas del corte: en un grafo denso son casi todas las aristas y repetirlas en cada paso ocupaba mucha memoria (un grafo completo de 200 nodos llegaba a ~23 MB).
 
 **Ejemplo: Lauderdale Construction (fig. 11.1), desde el nodo 1.**
 
@@ -210,10 +210,10 @@ Resultado: **16** (en cientos de pies), igual a la tabla 11.1. Aviso final: *"La
 | [48-49](src/algorithms/prim.ts#L48-L49) | Determina cuál extremo es el conectado (`desde`) y cuál el nuevo (`hacia`). |
 | [51-54](src/algorithms/prim.ts#L51-L54) | Actualiza estado. |
 | [56-60](src/algorithms/prim.ts#L56-L60) | Texto de empate si hubo más de una candidata con el mínimo. |
-| [62-69](src/algorithms/prim.ts#L62-L69) | Registra el paso; `aristasEvaluadas` = todas las candidatas. |
-| [72-74](src/algorithms/prim.ts#L72-L74) | Conexidad, nodos sin conectar, soluciones múltiples. |
-| [76-89](src/algorithms/prim.ts#L76-L89) | Paso "Resultado" con `aristasResultado` (azul). |
-| [105-122](src/algorithms/prim.ts#L105-L122) | Objeto `estrategia`: parámetro `inicio`, `forzarNoDirigido`, validación. |
+| [62-71](src/algorithms/prim.ts#L62-L71) | Registra el paso; `aristasEvaluadas` = las candidatas empatadas en el mínimo. |
+| [74-76](src/algorithms/prim.ts#L74-L76) | Conexidad, nodos sin conectar, soluciones múltiples. |
+| [78-91](src/algorithms/prim.ts#L78-L91) | Paso "Resultado" con `aristasResultado` (azul). |
+| [107-124](src/algorithms/prim.ts#L107-L124) | Objeto `estrategia`: parámetro `inicio`, `forzarNoDirigido`, validación. |
 
 **Cantidad de pasos:** 1 (inicio) + una por arista elegida + 1 (resultado). Lauderdale: 9.
 
@@ -231,9 +231,9 @@ Resultado: **16** (en cientos de pies), igual a la tabla 11.1. Aviso final: *"La
 | `Math.min` por `Math.max` ([prim.ts:45](src/algorithms/prim.ts#L45)) | Pasa a calcular el árbol de expansión **máxima**. Los textos seguirían diciendo "mínima". |
 | La condición de candidatas ([prim.ts:42](src/algorithms/prim.ts#L42)) por "algún extremo conectado" | Se aceptarían aristas entre dos nodos ya conectados → ciclos y `hacia` mal calculado. |
 | Quitar el `break` de la línea [43](src/algorithms/prim.ts#L43) | Con un grafo no conexo, `Math.min()` de una lista vacía da `Infinity`, `empatadas[0]` es `undefined` y la función se rompe. |
-| Quitar `forzarNoDirigido` ([prim.ts:112](src/algorithms/prim.ts#L112)) | La pantalla dibujaría flechas y dejaría cargar A→B y B→A por separado, pero el algoritmo seguiría ignorando el sentido: quedaría incoherente lo que se ve con lo que se calcula. |
+| Quitar `forzarNoDirigido` ([prim.ts:114](src/algorithms/prim.ts#L114)) | La pantalla dibujaría flechas y dejaría cargar A→B y B→A por separado, pero el algoritmo seguiría ignorando el sentido: quedaría incoherente lo que se ve con lo que se calcula. |
 | Quitar `dirigido: false` de la línea [19](src/algorithms/prim.ts#L19) | Sin efecto hoy: el filtro de candidatas no mira el sentido. Es una defensa por si se llama a `prim()` directamente con un grafo dirigido. |
-| Pasar la advertencia de no conexo a `errores` ([prim.ts:118](src/algorithms/prim.ts#L118)) | Ejecutar quedaría bloqueado en grafos no conexos y no se vería el árbol parcial. Falla el test que espera una advertencia. |
+| Pasar la advertencia de no conexo a `errores` ([prim.ts:120](src/algorithms/prim.ts#L120)) | Ejecutar quedaría bloqueado en grafos no conexos y no se vería el árbol parcial. Falla el test que espera una advertencia. |
 | Los textos de `descripcion` | Solo cambia lo que se lee, salvo la frase "Se conecta el nodo … con el …", que un test verifica. |
 
 ---
@@ -589,19 +589,19 @@ Resultado: flujo máximo **2**. Los dos caminos que quedan en la práctica son S
 | [58-62](src/algorithms/fordFulkerson.ts#L58-L62) | `residual()`: capacidad residual de un tramo (tabla de arriba). |
 | [64](src/algorithms/fordFulkerson.ts#L64) | `esInverso()`: el tramo va en contra del flujo ya asignado. |
 | [68-84](src/algorithms/fordFulkerson.ts#L68-L84) | **Búsqueda del camino**: BFS desde la fuente por tramos con residual positiva. Corta al alcanzar el sumidero. Devuelve el camino (o `null`) y los nodos alcanzados. |
-| [86-93](src/algorithms/fordFulkerson.ts#L86-L93) | `arcos()`, `etiquetas()`, `conFlujo()`: arman la foto para la tabla, el texto `flujo/capacidad` de cada arista y la lista de arcos con flujo. |
-| [95-106](src/algorithms/fordFulkerson.ts#L95-L106) | Iteración 0 y paso "Inicio". |
-| [109](src/algorithms/fordFulkerson.ts#L109) | Bucle: mientras exista un camino de aumento. |
-| [115-116](src/algorithms/fordFulkerson.ts#L115-L116) | **Cuello de botella**: `k` = mínimo de las residuales del camino. |
-| [119-135](src/algorithms/fordFulkerson.ts#L119-L135) | Paso "camino de aumento". Todavía no se modificó el flujo. |
+| [89-95](src/algorithms/fordFulkerson.ts#L89-L95) | `arcos()` y `conFlujo()`: arman la foto de flujo por arco (para las tablas y para el texto `flujo/capacidad` que dibuja el lienzo) y la lista de arcos con flujo. |
+| [97-107](src/algorithms/fordFulkerson.ts#L97-L107) | Iteración 0 y paso "Inicio". |
+| [110](src/algorithms/fordFulkerson.ts#L110) | Bucle: mientras exista un camino de aumento. |
+| [116-117](src/algorithms/fordFulkerson.ts#L116-L117) | **Cuello de botella**: `k` = mínimo de las residuales del camino. |
+| [120-135](src/algorithms/fordFulkerson.ts#L120-L135) | Paso "camino de aumento". Todavía no se modificó el flujo. |
 | [137](src/algorithms/fordFulkerson.ts#L137) | **Aumento**: a cada arista del camino se le suma `sentido × k` (suma si va en su sentido, resta si es inverso). |
 | [140](src/algorithms/fordFulkerson.ts#L140) | Arcos que quedaron saturados (flujo = capacidad). |
-| [147-163](src/algorithms/fordFulkerson.ts#L147-L163) | Guarda la foto de la iteración y registra el paso "aumentar el flujo". |
-| [165](src/algorithms/fordFulkerson.ts#L165) | Busca el próximo camino. |
-| [169-178](src/algorithms/fordFulkerson.ts#L169-L178) | **Corte mínimo**: `lado` = nodos alcanzados en la última búsqueda (la que no encontró camino); el corte son las aristas que van de un nodo alcanzado a uno no alcanzado. |
-| [183-199](src/algorithms/fordFulkerson.ts#L183-L199) | Paso "Condición de parada" con `aristasCorte`. |
-| [202-218](src/algorithms/fordFulkerson.ts#L202-L218) | Paso "Resultado" con `aristasResultado` y `aristasCorte`. |
-| [233-268](src/algorithms/fordFulkerson.ts#L233-L268) | Objeto `estrategia`: parámetros `origen` (fuente) y `destino` (sumidero), leyenda propia, validación. |
+| [147-162](src/algorithms/fordFulkerson.ts#L147-L162) | Guarda la foto de la iteración y registra el paso "aumentar el flujo". |
+| [164](src/algorithms/fordFulkerson.ts#L164) | Busca el próximo camino. |
+| [168-177](src/algorithms/fordFulkerson.ts#L168-L177) | **Corte mínimo**: `lado` = nodos alcanzados en la última búsqueda (la que no encontró camino); el corte son las aristas que van de un nodo alcanzado a uno no alcanzado. |
+| [182-197](src/algorithms/fordFulkerson.ts#L182-L197) | Paso "Condición de parada" con `aristasCorte`. |
+| [200-215](src/algorithms/fordFulkerson.ts#L200-L215) | Paso "Resultado" con `aristasResultado` y `aristasCorte`. |
+| [230-265](src/algorithms/fordFulkerson.ts#L230-L265) | Objeto `estrategia`: parámetros `origen` (fuente) y `destino` (sumidero), leyenda propia, validación. |
 
 **Cantidad de pasos:** 1 (inicio) + 2 por iteración + 1 (condición de parada) + 1 (resultado). Red del apunte: 7.
 
@@ -625,13 +625,13 @@ Resultado: flujo máximo **2**. Los dos caminos que quedan en la práctica son S
 | `cola.shift()` por `cola.pop()` ([fordFulkerson.ts:72](src/algorithms/fordFulkerson.ts#L72)) | La búsqueda pasa de BFS a DFS. Mismo flujo máximo con capacidades enteras; cambian los caminos y la cantidad de iteraciones, y con capacidades decimales se pierde la garantía de terminación. Fallan los tests que comparan los caminos. |
 | Quitar los tramos inversos ([fordFulkerson.ts:54](src/algorithms/fordFulkerson.ts#L54)) | El algoritmo deja de poder corregir decisiones tempranas: puede informar un flujo **menor al máximo** sin ningún aviso (en el ejemplo de arco inverso daría 1 en vez de 2). Falla ese test. |
 | `residual(t) <= EPS` por `< 0` ([fordFulkerson.ts:74](src/algorithms/fordFulkerson.ts#L74)) | Se aceptarían tramos sin capacidad: caminos con `k = 0` y bucle infinito. |
-| `Math.min` por `Math.max` ([fordFulkerson.ts:116](src/algorithms/fordFulkerson.ts#L116)) | Se enviaría más de lo que admite el arco más chico: se viola la capacidad y el resultado no es válido. |
+| `Math.min` por `Math.max` ([fordFulkerson.ts:117](src/algorithms/fordFulkerson.ts#L117)) | Se enviaría más de lo que admite el arco más chico: se viola la capacidad y el resultado no es válido. |
 | Quitar `limpiar()` ([fordFulkerson.ts:22](src/algorithms/fordFulkerson.ts#L22)) | Con enteros no cambia nada. Con decimales aparecen valores como 0,30000000000000004 en las tablas. Falla el test de decimales. |
-| Quitar la validación de negativos ([fordFulkerson.ts:258-262](src/algorithms/fordFulkerson.ts#L258-L262)) | Deja ejecutar; un arco con capacidad negativa nunca se usa en su sentido, pero su arco inverso tampoco, y el corte mínimo puede sumar mal. |
-| Pasar la advertencia de no dirigido a `errores` ([fordFulkerson.ts:263-264](src/algorithms/fordFulkerson.ts#L263-L264)) | El algoritmo exigiría grafo dirigido, como el apunte. Falla el test que espera una advertencia, y "Aleatorio" (que genera grafos no dirigidos) dejaría de poder ejecutarse hasta cambiar el toggle. |
+| Quitar la validación de negativos ([fordFulkerson.ts:255-259](src/algorithms/fordFulkerson.ts#L255-L259)) | Deja ejecutar; un arco con capacidad negativa nunca se usa en su sentido, pero su arco inverso tampoco, y el corte mínimo puede sumar mal. |
+| Pasar la advertencia de no dirigido a `errores` ([fordFulkerson.ts:260-261](src/algorithms/fordFulkerson.ts#L260-L261)) | El algoritmo exigiría grafo dirigido, como el apunte. Falla el test que espera una advertencia, y "Aleatorio" (que genera grafos no dirigidos) dejaría de poder ejecutarse hasta cambiar el toggle. |
 | `forzarNoDirigido: true` | Toda red se trataría como no dirigida. |
-| Quitar `leyenda` de la estrategia ([fordFulkerson.ts:243-248](src/algorithms/fordFulkerson.ts#L243-L248)) | Se mostraría la leyenda general (con "Descartado (formaría ciclo)" y sin el rojo del corte). |
-| Quitar `etiquetasAristas` de los pasos | Los arcos mostrarían solo la capacidad; el flujo se vería únicamente en la tabla. Falla un test. |
+| Quitar `leyenda` de la estrategia ([fordFulkerson.ts:240-245](src/algorithms/fordFulkerson.ts#L240-L245)) | Se mostraría la leyenda general (con "Descartado (formaría ciclo)" y sin el rojo del corte). |
+| Quitar el armado de `flujo/capacidad` en `GraphCanvas` | Los arcos mostrarían solo la capacidad; el flujo se vería únicamente en la tabla. |
 | Sacar `"ford-fulkerson"` de la configuración | Desaparece del selector, de la pantalla de inicio y su ejemplo del menú. No cambia ningún cálculo. |
 
 ---
@@ -648,6 +648,7 @@ Resultado: flujo máximo **2**. Los dos caminos que quedan en la práctica son S
 - Cada **nodo** es un evento: el momento en que terminaron todas las actividades que llegan a él.
 - El sentido del arco indica el orden: la actividad 2→4 solo puede empezar cuando ocurrió el evento 2.
 - La red es siempre **dirigida** y no puede tener ciclos. Una actividad ficticia (para indicar solo una precedencia) se carga con duración 0.
+- **Actividades paralelas**: dos actividades con el mismo evento de inicio y de fin (por ejemplo A y B, las dos de 1 a 2) se cargan con un nombre cada una (`actividad=A` al final de la línea de texto, o columna `actividad` en CSV y JSON). Al cargarlas, la app hace lo mismo que se hace a mano: agrega un evento intermedio (`2'`) y una actividad ficticia de duración 0 de `2'` a `2`, así B queda como `1→2'` y no hay dos arcos entre los mismos eventos. La ficticia se dibuja punteada y en la tabla figura como "ficticia".
 
 **Regla** (la misma para los dos).
 
@@ -664,7 +665,7 @@ Resultado: flujo máximo **2**. Los dos caminos que quedan en la práctica son S
 - Varianza del proyecto: suma de las varianzas de las actividades de la ruta crítica. Desvío estándar: su raíz cuadrada.
 - Probabilidad de terminar en un plazo: `Z = (plazo − duración esperada) / desvío` y se busca en la normal estándar.
 
-**Entradas.** El grafo. No piden nodo inicial ni final: se deducen de la red. CPM usa el peso como duración. PERT usa los tres tiempos; se cargan escribiendo `optimista más probable pesimista` (por ejemplo `1 2 3`) al crear o editar la arista, o en la carga masiva (cinco valores por línea, columnas `optimista` y `pesimista` en CSV y JSON).
+**Entradas.** El grafo. No piden nodo inicial ni final: se deducen de la red. CPM usa el peso como duración. PERT usa los tres tiempos; se cargan escribiendo `optimista más probable pesimista` (por ejemplo `1 2 3`) al crear o editar la arista, o en la carga masiva (cinco valores por línea, columnas `optimista` y `pesimista` en CSV y JSON). Opcionalmente, cada actividad puede llevar un nombre (`actividad`), que se muestra en la tabla en lugar de `desde→hasta`.
 
 **Salidas.**
 
@@ -704,6 +705,7 @@ El ejemplo está cargado dos veces en el menú: "General Foundry (CPM)", con los
 | Más de un evento inicial o final | Advertencia. Todos los iniciales arrancan en 0 y el proyecto termina con el último final. |
 | Más de una ruta crítica | Se pintan todas y se avisa. En PERT se informa la de **mayor varianza**. |
 | Actividad de duración 0 | Se acepta (actividad ficticia). |
+| Dos actividades con el mismo inicio y fin | Si cada una tiene su nombre, se agrega un evento intermedio y una ficticia de duración 0 (ver arriba). Sin nombre, o con el mismo nombre, la carga lo marca como "arista repetida" y explica cómo cargarlas. |
 | Grafo cargado como no dirigido | Se trata como dirigido, de origen a destino según se cargó cada arista. |
 | CPM sobre aristas con tres tiempos | Usa el peso, es decir el tiempo más probable. Para usar el esperado hay que ejecutar PERT. |
 
@@ -733,10 +735,10 @@ El ejemplo está cargado dos veces en el menú: "General Foundry (CPM)", con los
 | [175-190](src/algorithms/proyecto.ts#L175-L190) | **Hacia adelante**: recorre `orden` y toma el mayor de `temprano(origen) + duración`. |
 | [192-199](src/algorithms/proyecto.ts#L192-L199) | Duración del proyecto: el mayor tiempo más temprano. |
 | [201-216](src/algorithms/proyecto.ts#L201-L216) | **Hacia atrás**: recorre `orden` al revés y toma el menor de `tardio(destino) − duración`. |
-| [218-236](src/algorithms/proyecto.ts#L218-L236) | Tiempos y holgura de cada actividad; es crítica si la holgura es 0. |
-| [240-259](src/algorithms/proyecto.ts#L240-L259) | Arma la ruta crítica que se informa y cuenta cuántas hay. |
-| [304-309](src/algorithms/proyecto.ts#L304-L309) | `probabilidadNormal`: normal estándar acumulada por aproximación numérica. |
-| [312-316](src/algorithms/proyecto.ts#L312-L316) | `probabilidadDeTerminar`: calcula Z y la probabilidad para un plazo. |
+| [218-238](src/algorithms/proyecto.ts#L218-L238) | Tiempos y holgura de cada actividad; es crítica si la holgura es 0. |
+| [242-261](src/algorithms/proyecto.ts#L242-L261) | Arma la ruta crítica que se informa y cuenta cuántas hay. |
+| [306-311](src/algorithms/proyecto.ts#L306-L311) | `probabilidadNormal`: normal estándar acumulada por aproximación numérica. |
+| [314-318](src/algorithms/proyecto.ts#L314-L318) | `probabilidadDeTerminar`: calcula Z y la probabilidad para un plazo. |
 
 **Por qué el orden topológico.** Para calcular el tiempo más temprano de un evento hay que conocer antes el de todos sus predecesores. El orden topológico garantiza eso con una sola pasada, y de paso detecta los ciclos.
 
@@ -761,7 +763,7 @@ El ejemplo está cargado dos veces en el menú: "General Foundry (CPM)", con los
 | Quitar la detección de ciclos ([proyecto.ts:108-113](src/algorithms/proyecto.ts#L108-L113)) | `ordenTopologico` devuelve `null` y el cálculo se rompe al ejecutar. |
 | Pasar las advertencias de varios inicios o finales a `errores` | Solo se aceptarían redes con un único evento inicial y uno final; el grafo aleatorio dejaría de poder ejecutarse casi siempre. |
 | Quitar `forzarDirigido` de la estrategia | La pantalla dejaría elegir "No dirigido" y dibujaría sin flechas, aunque el cálculo seguiría tratando la red como dirigida. |
-| El criterio de "mayor varianza" entre rutas críticas ([proyecto.ts:241-250](src/algorithms/proyecto.ts#L241-L250)) | Con varias rutas críticas se informaría otra; cambian varianza y probabilidad en PERT. La duración es la misma. |
+| El criterio de "mayor varianza" entre rutas críticas ([proyecto.ts:243-252](src/algorithms/proyecto.ts#L243-L252)) | Con varias rutas críticas se informaría otra; cambian varianza y probabilidad en PERT. La duración es la misma. |
 
 ---
 
@@ -787,7 +789,7 @@ Ejemplo del caso no conexo (aristas `A–B 1` y `C–D 2`): Prim desde A da tota
 
 ### 9.1 Usando la app
 
-Después de ejecutar, el resultado queda atado a una **clave** = estrategia + parámetros + firma del grafo ([App.tsx:103-107](src/App.tsx#L103-L107), [grafo.ts:110-116](src/lib/grafo.ts#L110-L116)).
+Después de ejecutar, el resultado queda atado a una **clave** = estrategia + parámetros + firma del grafo ([App.tsx:113-118](src/App.tsx#L113-L118), [grafo.ts:165-171](src/lib/grafo.ts#L165-L171)).
 
 | Acción | ¿Se mantiene el resultado? |
 | --- | --- |
@@ -804,7 +806,8 @@ Cuando el resultado deja de ser vigente, se borran los colores, las aristas vuel
 
 Otros comportamientos:
 
-- **Cargar un grafo grande**: si la carga masiva trae más de 20 nodos sin posición, se acomodan solos con Auto-layout en lugar de dibujarse en círculo (`NODOS_EN_CIRCULO` en [App.tsx:36-37](src/App.tsx#L36-L37)).
+- **Agregar con la carga masiva una arista que ya existe**: se actualiza su peso (y se informa cuántas se actualizaron); no se duplica.
+- **Cargar un grafo grande**: si la carga masiva trae más de 30 nodos sin posición, se acomodan solos con Auto-layout en lugar de dibujarse en círculo (`NODOS_EN_CIRCULO` en [App.tsx:36-37](src/App.tsx#L36-L37)).
 - **Borrar el nodo elegido como parámetro**: se toma el nodo por defecto (primero; para destino, el último).
 - **Dijkstra o Ford-Fulkerson con un solo nodo**: origen y destino por defecto coinciden → error "tienen que ser nodos distintos".
 - **Cambiar de estrategia**: los nodos elegidos se conservan entre Dijkstra y Ford-Fulkerson, porque usan los mismos parámetros (`origen` y `destino`).
@@ -835,8 +838,8 @@ Ninguna opción de configuración cambia el resultado de un algoritmo: solo qué
 | Cambiar `orden` | Cambia la posición en el selector y cuál es la estrategia inicial. Falla el test del registro si se altera el orden. |
 | Agregar un campo a `Paso` | No pasa nada hasta que `GraphCanvas` o `ResultsPanel` lo lean. |
 | Quitar o renombrar un campo de `Paso` | TypeScript marca error en los algoritmos y en los dos componentes que lo usan. |
-| Cambiar los colores | Solo [GraphCanvas.tsx:77-97](src/components/GraphCanvas.tsx#L77-L97) y la leyenda en [App.tsx:474-507](src/App.tsx#L474-L507). El orden de las reglas define qué color gana. |
-| Cambiar los textos de la leyenda | Los generales están en `LEYENDA_GENERAL` ([App.tsx:482-487](src/App.tsx#L482-L487)); los de Ford-Fulkerson, en el campo `leyenda` de su estrategia. Un color solo aparece en la leyenda si tiene texto. |
+| Cambiar los colores | Solo [GraphCanvas.tsx:84-104](src/components/GraphCanvas.tsx#L84-L104) y la leyenda en [App.tsx:504-537](src/App.tsx#L504-L537). El orden de las reglas define qué color gana. |
+| Cambiar los textos de la leyenda | Los generales están en `LEYENDA_GENERAL` ([App.tsx:512-517](src/App.tsx#L512-L517)); los de Ford-Fulkerson, en el campo `leyenda` de su estrategia. Un color solo aparece en la leyenda si tiene texto. |
 | Cambiar `listaAdyacencia` | Afecta a Dijkstra, a la conexidad (Prim y Kruskal) y a la detección de soluciones múltiples. No afecta a Ford-Fulkerson. |
 | Cambiar las velocidades | `VELOCIDADES` en [StepControls.tsx:1-5](src/components/StepControls.tsx#L1-L5) (milisegundos por paso). |
 
@@ -846,7 +849,7 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 
 ## 10. Tests que respaldan cada afirmación
 
-`npm test` corre 66 tests (todos pasan). Los de algoritmos están en [algoritmos.test.ts](src/algorithms/algoritmos.test.ts) y los de CPM y PERT en [proyecto.test.ts](src/algorithms/proyecto.test.ts):
+`npm test` corre 103 tests (todos pasan). Los de algoritmos están en [algoritmos.test.ts](src/algorithms/algoritmos.test.ts), los de CPM y PERT en [proyecto.test.ts](src/algorithms/proyecto.test.ts), los de carga masiva en [parsers.test.ts](src/parsers/parsers.test.ts) y [grafo.test.ts](src/lib/grafo.test.ts), y los de la carpeta [ejemplos/](ejemplos/) en [ejemplos.test.ts](src/ejemplos.test.ts):
 
 | Qué se afirma | Test |
 | --- | --- |
@@ -866,7 +869,7 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 | Pesos negativos bloqueados | `bloquea pesos negativos` |
 | Origen ≠ destino | `exige origen y destino distintos` |
 | Rutas óptimas múltiples | `detecta rutas óptimas múltiples` |
-| Red del apunte: caminos S-A-T (8) y S-B-T (10), flujo máximo 18, 7 pasos, etiqueta `8/10` en S→A | `red de transmisión del apunte…` |
+| Red del apunte: caminos S-A-T (8) y S-B-T (10), flujo máximo 18, 7 pasos, flujo final 8 en S→A | `red de transmisión del apunte…` |
 | Corte mínimo {S, A, B} con A→T y B→T, capacidad igual al flujo máximo | `el corte mínimo tiene la misma capacidad que el flujo máximo` |
 | Un arco inverso corrige la primera asignación (flujo 2, A→B vuelve a 0) | `usa un arco inverso para corregir una asignación temprana` |
 | Ningún arco supera su capacidad y en cada nodo intermedio entra lo mismo que sale (red de 6 nodos, flujo 23) | `cumple capacidad y conservación en cada nodo intermedio` |
@@ -889,6 +892,12 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 | Actividades ficticias y varios eventos iniciales o finales | `acepta actividades ficticias de duración 0…` |
 | Red de 200 eventos: la ruta crítica suma la duración y no hay holguras negativas | `en una red de 200 eventos…` |
 | Los tres tiempos se cargan por texto, CSV y JSON, y se conservan al exportar | `texto: cinco valores por línea`, `CSV y JSON: columnas optimista y pesimista…` |
+| La línea `dirigido=true/false` se lee en texto y CSV, y exportar → importar conserva la dirección | `describe('línea "dirigido=" (CSV y texto)')` |
+| A→B y B→A en una red no dirigida es un error de carga | `describe('A→B y B→A en una red no dirigida')` |
+| Actividades paralelas: se cargan con nombre, se crea el evento intermedio y la ruta crítica suma solo las reales | `describe('actividades paralelas (CPM/PERT)')`, `desdePlano: actividades paralelas…` |
+| Agregar una arista que ya existe actualiza su peso | `desdePlano: agregar al grafo existente` |
+| Grafo completo de 200 nodos (19.900 aristas): se carga en menos de 500 ms y los pasos de Prim pesan menos de 3 MB | `desdePlano: rendimiento…`, `memoria de los pasos…` |
+| Los archivos de `ejemplos/` cargan y validan para su algoritmo | `ejemplos/ cargan sin errores…` |
 
 ---
 
@@ -904,9 +913,9 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 
 **¿Por qué Prim y Kruskal ignoran el sentido?** El árbol de expansión mínima está definido para grafos no dirigidos (conectar, no recorrer). La estrategia lo declara con `forzarNoDirigido`.
 
-**¿Dónde está "la lógica"?** En `src/algorithms/`: un archivo por modelo, funciones puras sin interfaz. Las líneas de decisión son [prim.ts:42-47](src/algorithms/prim.ts#L42-L47), [kruskal.ts:77](src/algorithms/kruskal.ts#L77), [dijkstra.ts:68-91](src/algorithms/dijkstra.ts#L68-L91) y [fordFulkerson.ts:68-84](src/algorithms/fordFulkerson.ts#L68-L84) (búsqueda del camino) junto con [fordFulkerson.ts:116](src/algorithms/fordFulkerson.ts#L116) y [fordFulkerson.ts:137](src/algorithms/fordFulkerson.ts#L137) (cuello de botella y aumento).
+**¿Dónde está "la lógica"?** En `src/algorithms/`: un archivo por modelo, funciones puras sin interfaz. Las líneas de decisión son [prim.ts:42-47](src/algorithms/prim.ts#L42-L47), [kruskal.ts:77](src/algorithms/kruskal.ts#L77), [dijkstra.ts:68-91](src/algorithms/dijkstra.ts#L68-L91) y [fordFulkerson.ts:68-84](src/algorithms/fordFulkerson.ts#L68-L84) (búsqueda del camino) junto con [fordFulkerson.ts:117](src/algorithms/fordFulkerson.ts#L117) y [fordFulkerson.ts:137](src/algorithms/fordFulkerson.ts#L137) (cuello de botella y aumento).
 
-**¿Cómo se anima?** No se anima el algoritmo: se calcula todo de una vez y se guarda la lista de pasos. La animación es un temporizador que suma 1 al índice ([App.tsx:113-121](src/App.tsx#L113-L121)).
+**¿Cómo se anima?** No se anima el algoritmo: se calcula todo de una vez y se guarda la lista de pasos. La animación es un temporizador que suma 1 al índice ([App.tsx:121-132](src/App.tsx#L121-L132)).
 
 **¿Cuál es la diferencia entre CPM y PERT?** El cálculo de la red es el mismo. CPM usa una duración fija por actividad; PERT usa tres tiempos, calcula el tiempo esperado y agrega la varianza, con la que se obtiene la probabilidad de cumplir un plazo.
 
@@ -914,7 +923,7 @@ Después de cualquier cambio en `src/algorithms/`: `npm test` y `npm run typeche
 
 **¿Por qué CPM y PERT necesitan un grafo dirigido y sin ciclos?** El sentido del arco indica qué va antes. Con un ciclo, una actividad dependería de sí misma y el proyecto no podría empezar; la app lo detecta y muestra el ciclo.
 
-**¿Cómo se representan las actividades?** Como arcos entre eventos (actividad en el arco). El peso es la duración; en PERT la arista lleva además los tiempos optimista y pesimista. Las líneas de decisión son [proyecto.ts:179](src/algorithms/proyecto.ts#L179) y [proyecto.ts:205](src/algorithms/proyecto.ts#L205).
+**¿Cómo se representan las actividades?** Como arcos entre eventos (actividad en el arco). El peso es la duración; en PERT la arista lleva además los tiempos optimista y pesimista. Dos actividades paralelas (mismo inicio y fin) se separan con un evento intermedio y una actividad ficticia de duración 0, igual que a mano. Las líneas de decisión son [proyecto.ts:179](src/algorithms/proyecto.ts#L179) y [proyecto.ts:205](src/algorithms/proyecto.ts#L205).
 
 **¿Cómo se agrega otro modelo?** Un archivo nuevo en `src/algorithms/` que exporte `estrategia`; el registro es automático. Así se agregó flujo máximo. Queda oculto hasta sumar su `id` a `config.json`.
 

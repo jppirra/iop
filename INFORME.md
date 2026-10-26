@@ -10,7 +10,7 @@ Este comentario no se ve al exportar el documento.
 **Investigación Operativa · UTN · Grupo 3 — IOP 2026**
 Junco Paola (43516) · Hernandez Lucas Adriel (51895) · Moreno Pablo (51452) · Pirra Juan Pablo (54051) · Schneider Christian (52682) · Vanzo David (48463)
 
-Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.001.013
+Repositorio: <https://github.com/jppirra/iop> · Versión actual: v1.001.014
 
 ## 1. Algoritmos
 
@@ -50,7 +50,7 @@ El usuario puede cargar el grafo de tres formas:
 - **Carga masiva**, pegando texto o subiendo un archivo. Pensada para grafos grandes (se probó con 200 nodos).
 - **Grafo aleatorio**, para probar rápido.
 
-La información que hay que dar es, por cada conexión: **nodo origen, nodo destino y peso** (distancia, costo, capacidad o duración). Para PERT el peso se reemplaza por tres tiempos: optimista, más probable y pesimista. Los nodos no se declaran aparte: se deducen de las conexiones. Además se indica si el grafo es dirigido y, según el algoritmo, el nodo inicial o el par origen–destino.
+La información que hay que dar es, por cada conexión: **nodo origen, nodo destino y peso** (distancia, costo, capacidad o duración). Para PERT el peso se reemplaza por tres tiempos: optimista, más probable y pesimista. Los nodos no se declaran aparte: se deducen de las conexiones. Además se indica si el grafo es dirigido (en la pantalla o en el mismo archivo) y, según el algoritmo, el nodo inicial o el par origen–destino. En CPM y PERT cada actividad puede llevar un nombre, que permite cargar actividades paralelas (mismo inicio y fin): la aplicación las separa sola con un evento intermedio y una actividad ficticia de duración 0.
 
 Formatos aceptados en la carga masiva:
 
@@ -60,7 +60,7 @@ Formatos aceptados en la carga masiva:
 | CSV con encabezado | `origen,destino,peso` |
 | JSON | `{ "dirigido": false, "aristas": [{ "origen": "1", "destino": "2", "peso": 8 }] }` |
 
-Antes de cargar, la aplicación informa cuántos nodos y aristas detectó y marca los errores por línea (peso no numérico, línea mal formada, arista repetida). El grafo se puede exportar a JSON o CSV.
+En texto y CSV, una primera línea opcional `dirigido=true` o `dirigido=false` indica si la red es dirigida; si falta, se usa la opción de la pantalla y la aplicación avisa cómo interpretó la red. Antes de cargar, la aplicación informa cuántos nodos y aristas detectó y marca los errores por línea (peso no numérico, línea mal formada, arista repetida, la misma conexión en los dos sentidos en una red no dirigida). El grafo se puede exportar a JSON o CSV, conservando la dirección, los tiempos de PERT y el nombre de cada actividad.
 
 ## 3. Representación del grafo
 
@@ -113,7 +113,7 @@ Se eligieron dos listas porque es como se edita el grafo (agregar o quitar un el
 Estado actual:
 
 - **Desarrollado:** carga manual, carga masiva (texto, CSV, JSON) y aleatoria; edición y deshacer; dibujo del grafo dirigido o no dirigido; los seis algoritmos (Prim, Kruskal, Dijkstra, Ford-Fulkerson, CPM y PERT) con ejecución animada y paso a paso; tablas de resultados por algoritmo; avisos de empates, soluciones múltiples, grafo no conexo y datos inválidos; exportación.
-- **Verificado:** 66 tests automáticos. Reproducen los ejemplos del libro de la cátedra (Lauderdale = 16, Leadville = 32, Ray Design = 290, General Foundry = 15 semanas con sus holguras y probabilidad) y la red del apunte de flujo máximo (18). También comprueban que Prim y Kruskal coincidan y que el flujo máximo sea igual al corte mínimo, incluso en grafos de 200 nodos.
+- **Verificado:** 103 tests automáticos. Reproducen los ejemplos del libro de la cátedra (Lauderdale = 16, Leadville = 32, Ray Design = 290, General Foundry = 15 semanas con sus holguras y probabilidad) y la red del apunte de flujo máximo (18). También comprueban que Prim y Kruskal coincidan y que el flujo máximo sea igual al corte mínimo, incluso en grafos de 200 nodos, y que la carga masiva lea bien cada formato: un grafo completo de 200 nodos (19.900 aristas) se carga en menos de medio segundo.
 - **Publicado:** la aplicación está desplegada y el código está en el repositorio.
 - **Sin comenzar:** nada de lo pedido en la consigna.
 

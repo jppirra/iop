@@ -1,7 +1,7 @@
 # Documento de entrega — TPI Modelos de red
 
 **Investigación Operativa · Ingeniería en Sistemas de Información · UTN**
-**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.001.013**
+**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.001.014**
 
 | Integrante | Legajo |
 | --- | --- |
@@ -60,7 +60,7 @@ Aplicación web que permite armar un grafo, elegir un algoritmo y ver el resulta
 
 - **Tecnología:** React + TypeScript, compilado con Vite. El grafo se dibuja con Cytoscape. No tiene servidor ni base de datos: todo corre en el navegador.
 - **Cómo ejecutarla:** `npm install` y `npm run dev` (abre en `http://localhost:5173`). Requiere Node 20 o superior. También se publica como sitio estático en Vercel.
-- **Tests:** `npm test` corre 66 tests automáticos.
+- **Tests:** `npm test` corre 103 tests automáticos.
 
 ---
 
@@ -119,15 +119,26 @@ Formato JSON:
 }
 ```
 
-El enlace "Descargar JSON de ejemplo" baja un archivo con este formato, listo para editar y subir.
+El enlace "Descargar JSON de ejemplo" baja un archivo con este formato, listo para editar y subir. La carpeta [ejemplos/](ejemplos/) del repositorio tiene un CSV y un JSON listos para cada algoritmo.
 
-Antes de cargar, la aplicación informa cuántos nodos y aristas detectó, y marca los errores **por línea** (peso no numérico, línea mal formada, arista repetida). Después se elige **Reemplazar grafo** o **Agregar al grafo**.
+Antes de cargar, la aplicación informa cuántos nodos y aristas detectó, y marca los errores **por línea** (peso no numérico, línea mal formada, arista repetida, la misma conexión cargada en los dos sentidos en una red no dirigida). Después se elige **Reemplazar grafo** o **Agregar al grafo**. Al agregar, si una arista ya existía se actualiza su peso y se informa cuántas se actualizaron.
 
-Si el grafo tiene más de 20 nodos, se acomoda solo. Con "Auto-layout" se vuelve a acomodar y con "Centrar" se ajusta el zoom.
+Si el grafo tiene más de 30 nodos, se acomoda solo. Con "Auto-layout" se vuelve a acomodar y con "Centrar" se ajusta el zoom.
 
-**Si el grafo es dirigido**, elegir "Dirigido" en la barra superior (o `"dirigido": true` en el JSON). Prim y Kruskal siempre lo tratan como no dirigido; CPM y PERT, siempre como dirigido.
+**Si el grafo es dirigido**, elegir "Dirigido" en la barra superior, o declararlo en el archivo: en texto y CSV con una primera línea `dirigido=true` (o `dirigido=false`), y en JSON con `"dirigido": true`. Si el archivo no lo declara, se usa la opción de la barra; en los dos casos, al cargar la aplicación avisa cómo interpretó la red. Prim y Kruskal siempre lo tratan como no dirigido; CPM y PERT, siempre como dirigido. En una red no dirigida, `A B` y `B A` son la misma conexión: si aparecen las dos es un error de carga (si de verdad son dos arcos distintos, por ejemplo capacidades distintas por sentido en flujo máximo, hay que cargar la red como dirigida).
 
 **Para CPM y PERT** cada arco es una actividad y cada nodo un evento (inicio o fin de actividades); el peso es la duración. En PERT se cargan los tres tiempos: en el dibujo se escribe `optimista más probable pesimista` (por ejemplo `1 2 3`) al crear o editar la arista; en texto son cinco valores por línea (`1 2 1 2 3`); en CSV y JSON se agregan `optimista` y `pesimista`.
+
+**Actividades paralelas** (dos actividades con el mismo evento de inicio y de fin): se le da un nombre a cada una, con `actividad=A` al final de la línea de texto o la columna `actividad` en CSV y JSON. La aplicación agrega sola el evento intermedio (por ejemplo `2'`) y la actividad ficticia de duración 0, como se hace a mano:
+
+```
+dirigido=true
+1 2 4 actividad=A
+1 2 2 actividad=B
+2 3 5 actividad=C
+```
+
+Todo lo anterior es opcional: los archivos con el formato básico (sin `dirigido=` ni `actividad`) se cargan igual que antes.
 
 ### 3.3 Modificar los datos de entrada
 
@@ -228,11 +239,11 @@ El recorrido línea por línea de cada uno está en el [MANUAL.md](MANUAL.md), s
 - El **nombre** del nodo es lo que ve y edita el usuario. No se puede repetir dentro del grafo.
 - Las aristas guardan el **id** de sus dos nodos, no el nombre. Por eso renombrar un nodo no afecta a ninguna arista.
 - En la carga masiva los nodos se identifican por nombre; al cargar se les asigna el id.
-- No se permiten dos aristas entre el mismo par de nodos (en un grafo dirigido, A→B y B→A son distintas).
+- No se permiten dos aristas entre el mismo par de nodos (en un grafo dirigido, A→B y B→A son distintas). La excepción son las actividades paralelas de CPM y PERT cargadas con nombre: al cargarlas se separan con un evento intermedio y una actividad ficticia, así en el grafo tampoco quedan dos arcos entre los mismos nodos.
 
 ### 4.6 ¿Cómo verificaron que los resultados obtenidos son correctos?
 
-Con 66 tests automáticos (`npm test`) y cuatro criterios:
+Con 103 tests automáticos (`npm test`) y cuatro criterios:
 
 1. **Casos con solución conocida.** Los tests reproducen los ejemplos del libro de la cátedra (Render, cap. 11) con el resultado y el orden de los pasos:
 
@@ -260,6 +271,8 @@ Con 66 tests automáticos (`npm test`) y cuatro criterios:
 
 En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue igual al corte mínimo.
 
+**Carga masiva.** Los tests cubren cada formato (texto, CSV y JSON), los errores por línea, la línea `dirigido=`, las actividades paralelas y que exportar y volver a importar conserve el grafo. Un grafo completo de 200 nodos (19.900 aristas) se lee y se carga en menos de medio segundo. Los archivos de [ejemplos/](ejemplos/) se cargan y se validan para su algoritmo en cada corrida de los tests.
+
 ### 4.7 ¿Qué dificultades encontraron durante la implementación y cómo las resolvieron?
 
 | Dificultad | Cómo se resolvió |
@@ -271,7 +284,10 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 | Tres formatos de carga con reglas distintas | Los tres parsers devuelven el mismo tipo de dato y el mismo tipo de error (ubicación y mensaje), así la pantalla los trata igual. |
 | En flujo máximo, una primera elección de camino podía impedir llegar al máximo | Se implementó la red residual con arcos inversos, que permiten deshacer flujo ya asignado. Hay un test con un caso donde sin arcos inversos el resultado sería incorrecto. |
 | Capacidades decimales producían valores como 0,30000000000000004 | Se redondea a 9 decimales en cada operación de flujo. |
-| Un grafo de 200 nodos se dibujaba ilegible | Los nodos se ubicaban en círculo y el zoom mínimo no alcanzaba para verlo completo. Ahora, con más de 20 nodos, se acomodan solos y se amplió el zoom. |
+| Un grafo de 200 nodos se dibujaba ilegible | Los nodos se ubicaban en círculo y el zoom mínimo no alcanzaba para verlo completo. Ahora, con más de 30 nodos, se acomodan solos y se amplió el zoom. |
+| Un grafo muy denso (200 nodos, 19.900 aristas) tardaba más de un segundo en cargarse y los pasos de Prim ocupaban unos 22 MB | La carga buscaba cada arista recorriendo todas las anteriores; ahora usa un índice y tarda unos 50 ms. Prim dejó de guardar en cada paso todas las candidatas (solo las empatadas, menos de 1 MB en total) y Ford-Fulkerson dejó de repetir el texto `flujo/capacidad` de todos los arcos en cada paso: se arma al dibujar a partir de la foto de cada iteración. |
+| Un archivo podía traer la misma conexión dos veces y la segunda pisaba a la primera sin avisar | En una red no dirigida, `A B` y `B A` ahora son un error de carga con la línea exacta. Para no depender de la opción de la pantalla, el archivo puede declarar si la red es dirigida (`dirigido=true`). |
+| CPM y PERT con actividades paralelas (mismo inicio y fin) no se podían cargar: daban "arista repetida" | Cada actividad puede llevar un nombre; al cargar, la segunda se separa con un evento intermedio y una actividad ficticia de duración 0, que es la técnica que se usa a mano. |
 | CPM y PERT necesitan más datos por actividad que un solo peso | Se modeló cada actividad como un arco, así CPM usa el grafo tal cual. Para PERT se agregaron dos datos opcionales a la arista (optimista y pesimista) y se extendieron los tres formatos de carga, sin cambiar nada para los demás algoritmos. |
 | El dibujo del ejemplo del libro (fig. 11.1) no se leía completo en el material disponible | Las 7 aristas del árbol salen de la tabla 11.1; las restantes se reconstruyeron de los números de la figura. El resultado coincide con el libro. |
 
@@ -297,9 +313,9 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 
 ## 6. Límites conocidos
 
-- CPM y PERT representan cada actividad como un arco entre dos eventos. Las actividades se identifican por sus eventos (por ejemplo `2→4`), no por una letra, y una precedencia sin actividad se carga como arco de duración 0.
+- CPM y PERT representan cada actividad como un arco entre dos eventos. Las actividades se identifican por sus eventos (por ejemplo `2→4`), salvo que se les dé un nombre en la carga masiva (`actividad`), y una precedencia sin actividad se carga como arco de duración 0.
 - En PERT, para 16 semanas en el ejemplo del libro la app da 71,5 % y el libro 71,6 %: el libro busca en la tabla con Z redondeado a dos decimales y la app usa Z sin redondear.
-- No admite dos aristas entre el mismo par de nodos.
+- No admite dos aristas entre el mismo par de nodos (salvo actividades paralelas de CPM y PERT con nombre, que se separan con un evento intermedio).
 - El grafo no se guarda al cerrar la pestaña; hay que exportarlo (JSON o CSV) para conservarlo.
 - En grafos grandes la animación completa es larga (un paso por nodo o arista): conviene ir directo al resultado con "Final". La tabla de etiquetas de Dijkstra tiene una columna por nodo y requiere desplazarse.
 - Dijkstra no admite pesos negativos (lo informa y no ejecuta).
@@ -309,8 +325,7 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 
 ## 7. Pendientes antes de la entrega
 
-1. **Confirmar la convención de CPM y PERT con lo visto en clase.** Se implementó actividad en el arco. Si la cátedra trabaja con actividad en el nodo, los resultados (duración, holguras, ruta crítica) son los mismos, pero el grafo se dibuja distinto.
-2. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
+1. **Ensayar la demostración** con un grafo que no sea ninguno de los ejemplos, cargado por texto, y con un cambio de pesos en vivo.
 
 ---
 
@@ -321,4 +336,5 @@ En todos los casos Prim y Kruskal dieron el mismo total y el flujo máximo fue i
 | [README.md](README.md) | Instalación, uso, formatos de carga, configuración. |
 | [MANUAL.md](MANUAL.md) | Cada algoritmo en nivel funcional y técnico, con trazas, referencias a líneas de código y qué pasa si se modifica cada parte. |
 | [docs/](docs/) | Visión general, arquitectura, algoritmos, casos de uso y diagramas de componentes y de secuencia. |
+| [ejemplos/](ejemplos/) | Un CSV y un JSON listos para cargar por algoritmo (incluye CPM con actividades paralelas y flujo máximo con capacidades distintas por sentido). |
 | [Lib/](Lib/) | Consigna del TPI y material de la cátedra usado. |
