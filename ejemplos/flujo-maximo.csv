@@ -1,0 +1,9 @@
+dirigido=true
+origen,destino,peso
+S,A,10
+A,S,2
+S,B,8
+B,T,8
+A,T,5
+A,B,3
+B,A,1

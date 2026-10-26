@@ -54,6 +54,12 @@ mientras |conectados| < |nodos|:
 - **Complejidad**: O(V · E) en esta versión (recorre todas las aristas en cada
   iteración) — prioriza claridad sobre eficiencia asintótica (no usa cola de
   prioridad). Con 200 nodos tarda unos milisegundos.
+- **Memoria de los pasos**: `aristasEvaluadas` solo guarda las candidatas
+  **empatadas** en el mínimo (las que de verdad compitieron), no todas las
+  candidatas del corte — en un grafo denso `candidatas` puede ser casi tan
+  grande como `aristas`, y repetirla en cada paso pesaba mucho (un grafo
+  completo de 200 nodos llegaba a ~23 MB de pasos; con este cambio queda por
+  debajo de 0,5 MB) sin cambiar el árbol, el total ni los avisos de empate.
 
 ### Parámetros y validación
 
@@ -244,6 +250,12 @@ corte := aristas que van de un nodo alcanzado en el último BFS a uno no alcanza
 - **Decimales**: cada operación se redondea a 9 decimales para no arrastrar
   errores de punto flotante.
 - **Complejidad**: O(V · E²).
+- **Memoria de los pasos**: cada paso ya no guarda una copia de
+  `etiquetasAristas` (flujo/capacidad de **todas** las aristas): esa foto
+  completa se guarda una sola vez por iteración en `resultado.iteraciones`, y
+  `GraphCanvas` la deriva de `iteraciones[paso.iteracion]` al dibujar. En una
+  red de ~1.300 arcos esto bajaba de ~4,4 MB a menos de 3 MB sin cambiar lo
+  que se ve en el lienzo ni en el panel de resultados.
 
 ### Parámetros y validación
 
@@ -324,6 +336,14 @@ y al final: varianza del proyecto = suma de las varianzas de la ruta crítica;
   estándar. Cambiarlo no obliga a volver a ejecutar.
 - **Actividades ficticias**: una precedencia sin actividad se carga como arco
   de duración 0.
+- **Actividades paralelas**: cuando la carga masiva trae dos actividades con
+  el mismo origen y mismo destino (cada una con su propio nombre), no llegan
+  acá como dos arcos entre los mismos nodos — `lib/grafo.ts#desdePlano` ya
+  las separó con un evento intermedio y una actividad ficticia (`ficticia:
+  true`, duración 0) hacia el destino real, así CPM/PERT no necesitan saber
+  nada de actividades paralelas: para ellos son dos eventos y tres arcos
+  comunes. `ResultsPanel` muestra el nombre de la actividad en vez de
+  `desde→hasta` cuando existe, y marca las ficticias.
 - **Complejidad**: O(V · E).
 
 ### Parámetros y validación

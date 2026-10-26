@@ -1,0 +1,15 @@
+{
+  "dirigido": false,
+  "nodos": ["1", "2", "3", "4", "5", "6"],
+  "aristas": [
+    { "origen": "1", "destino": "2", "peso": 7 },
+    { "origen": "1", "destino": "3", "peso": 9 },
+    { "origen": "1", "destino": "6", "peso": 14 },
+    { "origen": "2", "destino": "3", "peso": 10 },
+    { "origen": "2", "destino": "4", "peso": 15 },
+    { "origen": "3", "destino": "4", "peso": 11 },
+    { "origen": "3", "destino": "6", "peso": 2 },
+    { "origen": "4", "destino": "5", "peso": 6 },
+    { "origen": "5", "destino": "6", "peso": 9 }
+  ]
+}

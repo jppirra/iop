@@ -254,7 +254,48 @@ campos `optimista` y `pesimista` en CSV y JSON. `leerTiempos`
 (`parsers/tipos.ts`) valida que se cumpla optimista ≤ más probable ≤
 pesimista.
 
-Si la carga trae más de 20 nodos sin posición, `App.tsx` dispara el
+### Dirección declarada (`dirigido=`)
+
+CSV y texto aceptan una línea opcional antes de las aristas, `dirigido=true` o
+`dirigido=false` (`LINEA_DIRIGIDO` en `parsers/tipos.ts`, sin distinguir
+mayúsculas); en JSON es el campo `"dirigido"` de siempre. `exportarCsv`
+escribe esa línea siempre, así exportar → importar conserva la dirección.
+Si el archivo no la declara, `App.tsx#alCargar` usa la del toggle de la
+pantalla y lo avisa explícitamente (y si la estrategia elegida fuerza una
+dirección, también lo menciona) — antes se heredaba en silencio.
+
+### A→B y B→A en una red no dirigida
+
+`completarNodos` valida los duplicados contra la dirección final cuando se
+conoce en el momento del parseo (declarada en el archivo): si la red es no
+dirigida, A→B y B→A cuentan como la misma conexión y es un error con la
+ubicación exacta (línea o `aristas[i]`) que explica cómo cargarlas como
+arcos independientes (`dirigido=true`). Cuando la dirección no se declara y
+se resuelve recién en `BulkLoadPanel` (según el toggle vigente), la misma
+regla la aplica `erroresDireccion` (`parsers/tipos.ts`), con `aristas[i]`
+como ubicación porque ya no hay número de línea.
+
+### Actividades paralelas (CPM/PERT)
+
+Dos aristas con el mismo origen y destino son, por defecto, "arista
+repetida" — salvo que cada una tenga su propio nombre de `actividad` (columna
+en CSV/JSON, o `actividad=Nombre` al final de la línea en texto; no un token
+suelto, porque sería ambiguo con los cinco valores de PERT). `completarNodos`
+las deja pasar sin fusionarlas; `lib/grafo.ts#desdePlano` es quien resuelve
+la actividad paralela creando un evento intermedio (nombre derivado del
+destino, p. ej. `2'`, sin chocar con nodos existentes) y una actividad
+ficticia de duración 0 hacia el destino real — el mismo truco que a mano.
+`actividad` se exporta en CSV y JSON.
+
+### Rendimiento e interfaz
+
+`desdePlano` indexa las aristas existentes por clave (`Map`, O(1) por
+arista) en vez de recorrerlas con `findIndex` en cada iteración: un grafo
+completo de 200 nodos (19.900 aristas) se parsea y convierte en menos de 500
+ms (antes, con el `findIndex` original, tardaba más de 1,5 s solo en
+`desdePlano`).
+
+Si la carga trae más de 30 nodos sin posición, `App.tsx` dispara el
 auto-layout del lienzo en lugar de ubicarlos en círculo, para que un grafo
 grande se pueda leer apenas se carga.
 
