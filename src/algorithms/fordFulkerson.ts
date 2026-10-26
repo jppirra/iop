@@ -83,13 +83,15 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
     return { camino, alcanzados }
   }
 
+  // Esta "foto" ya se guarda una vez por iteración en `iteraciones` (más abajo); los pasos no
+  // repiten una copia propia (GraphCanvas la deriva de `iteraciones[paso.iteracion]` al dibujar),
+  // así una red de ~1.300 aristas no multiplica su memoria por cada paso.
   const arcos = (): ArcoFlujo[] =>
     aristas.map((a) => {
       const f = flujo.get(a.id)!
       const [desde, hasta] = f < 0 ? [a.destino, a.origen] : [a.origen, a.destino]
       return { aristaId: a.id, desde: nombre(desde), hasta: nombre(hasta), capacidad: a.peso, flujo: Math.abs(f) }
     })
-  const etiquetas = () => Object.fromEntries(aristas.map((a) => [a.id, `${Math.abs(flujo.get(a.id)!)}/${a.peso}`]))
   const conFlujo = () => aristas.filter((a) => Math.abs(flujo.get(a.id)!) > EPS).map((a) => a.id)
 
   iteraciones.push({ numero: 0, camino: [], cuello: 0, flujoAcumulado: 0, arcos: arcos() })
@@ -101,7 +103,6 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
     nodosIncluidos: [],
     aristasIncluidas: [],
     aristasDescartadas: [],
-    etiquetasAristas: etiquetas(),
     iteracion: 0,
   })
 
@@ -130,8 +131,7 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
       nodosIncluidos: [],
       aristasIncluidas: conFlujo().filter((id) => !idsCamino.includes(id)),
       aristasDescartadas: [],
-      etiquetasAristas: etiquetas(),
-      iteracion: numero - 1,
+        iteracion: numero - 1,
     })
 
     for (const t of camino) flujo.set(t.arista.id, limpiar(flujo.get(t.arista.id)! + t.sentido * k))
@@ -158,8 +158,7 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
       nodosIncluidos: [],
       aristasIncluidas: conFlujo(),
       aristasDescartadas: [],
-      etiquetasAristas: etiquetas(),
-      iteracion: numero,
+        iteracion: numero,
     })
 
     busqueda = buscarCamino()
@@ -194,7 +193,6 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
     aristasIncluidas: conFlujo(),
     aristasDescartadas: [],
     aristasCorte: idsCorte,
-    etiquetasAristas: etiquetas(),
     iteracion: ultima,
   })
 
@@ -213,7 +211,6 @@ export function fordFulkerson(grafo: Grafo, fuente: string, sumidero: string): E
     aristasDescartadas: [],
     aristasResultado: conFlujo(),
     aristasCorte: idsCorte,
-    etiquetasAristas: etiquetas(),
     iteracion: ultima,
   })
 

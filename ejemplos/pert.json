@@ -1,0 +1,11 @@
+{
+  "dirigido": true,
+  "nodos": ["1", "2", "3", "4"],
+  "aristas": [
+    { "origen": "1", "destino": "2", "peso": 4, "optimista": 2, "pesimista": 6 },
+    { "origen": "2", "destino": "3", "peso": 3, "optimista": 1, "pesimista": 5 },
+    { "origen": "1", "destino": "3", "peso": 5, "optimista": 3, "pesimista": 9 },
+    { "origen": "3", "destino": "4", "peso": 2, "optimista": 1, "pesimista": 4 },
+    { "origen": "2", "destino": "4", "peso": 6, "optimista": 4, "pesimista": 10 }
+  ]
+}

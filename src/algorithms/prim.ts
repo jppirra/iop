@@ -63,7 +63,9 @@ export function prim(grafoOriginal: Grafo, inicio: string): Ejecucion<ResultadoA
       titulo: `Paso ${elegidas.length}`,
       descripcion: `Se conecta el nodo ${nombre(hacia)} con el ${nombre(desde)} porque es el nodo no conectado más cercano a los ya conectados, distancia ${minimo}. Distancia acumulada: ${total}.`,
       nodosActuales: [hacia],
-      aristasEvaluadas: candidatas.map((a) => a.id),
+      // Solo las candidatas que compitieron por el mínimo (no todo el corte): en un grafo denso
+      // `candidatas` puede ser casi tan grande como `aristas`, y repetirla en cada paso pesa mucho.
+      aristasEvaluadas: empatadas.map((a) => a.id),
       empate,
       ...estado(),
     })

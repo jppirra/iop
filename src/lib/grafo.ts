@@ -21,6 +21,15 @@ export function posicionesEnCirculo(cantidad: number, centro = { x: 400, y: 300 
 /**
  * Convierte un grafo plano (nombres) a un Grafo (ids). Si se pasa `base`, fusiona:
  * los nodos con el mismo nombre se reutilizan y las aristas repetidas actualizan su peso.
+ *
+ * Dos aristas con el mismo origen y destino (y, por lo tanto, la misma `actividad`
+ * distinta cada una — el parser ya rechazó cualquier otro caso en `completarNodos`) son
+ * actividades paralelas de un proyecto (CPM/PERT): en vez de pisarse, la segunda y las
+ * siguientes se resuelven con un evento intermedio (p. ej. `2'`) y una actividad ficticia
+ * de duración 0 hacia el destino real.
+ *
+ * Usa índices por clave (O(1) por arista) en vez de recorrer `aristas` en cada iteración,
+ * así cargar un grafo grande no queda en O(E²).
  */
 export function desdePlano(plano: GrafoPlano, dirigido: boolean, base?: Grafo): Grafo {
   const nodos: Nodo[] = base ? [...base.nodos] : []
@@ -38,13 +47,51 @@ export function desdePlano(plano: GrafoPlano, dirigido: boolean, base?: Grafo): 
     porNombre.set(nodo.nombre, nodo)
   }
 
+  const claveMezcla = (o: string, d: string) => (dirigido ? `${o}\u0000${d}` : [o, d].sort().join('\u0000'))
+  const porMezcla = new Map<string, number>() // última arista con esa clave (para mezclar, igual que `mismaConexion`)
+  aristas.forEach((a, i) => porMezcla.set(claveMezcla(a.origen, a.destino), i))
+  // origen\0destino exacto de las aristas de este `plano` (para contar actividades paralelas). Las de
+  // `base` no cuentan: si el plano repite una arista que ya estaba en el grafo, se actualiza su peso.
+  const porLiteral = new Map<string, number[]>()
+
   for (const a of plano.aristas) {
     const origen = porNombre.get(a.origen)!.id
     const destino = porNombre.get(a.destino)!.id
-    const existente = aristas.findIndex((e) => mismaConexion(e, origen, destino, dirigido))
-    const tiempos = { peso: a.peso, optimista: a.optimista, pesimista: a.pesimista }
-    if (existente >= 0) aristas[existente] = { ...aristas[existente], ...tiempos }
-    else aristas.push({ id: nuevoId('e'), origen, destino, ...tiempos })
+    const campos = { peso: a.peso, optimista: a.optimista, pesimista: a.pesimista, actividad: a.actividad, ficticia: a.ficticia }
+    const claveLiteral = `${origen}\u0000${destino}`
+    const mismoPar = porLiteral.get(claveLiteral) ?? []
+
+    if (mismoPar.length === 0) {
+      const existente = porMezcla.get(claveMezcla(origen, destino))
+      if (existente !== undefined) {
+        aristas[existente] = { ...aristas[existente], ...campos }
+        porLiteral.set(claveLiteral, [existente])
+      } else {
+        aristas.push({ id: nuevoId('e'), origen, destino, ...campos })
+        const i = aristas.length - 1
+        porMezcla.set(claveMezcla(origen, destino), i)
+        porLiteral.set(claveLiteral, [i])
+      }
+      continue
+    }
+
+    // Actividad paralela: evento intermedio origen→X→destino (X nuevo, nombre derivado del destino).
+    const nombreDestino = porNombre.get(a.destino)!.nombre
+    let nombreIntermedio = `${nombreDestino}${"'".repeat(mismoPar.length)}`
+    while (porNombre.has(nombreIntermedio)) nombreIntermedio += "'"
+    const o = porNombre.get(a.origen)!
+    const d = porNombre.get(a.destino)!
+    const intermedio: Nodo = {
+      id: nuevoId('n'),
+      nombre: nombreIntermedio,
+      x: (o.x + d.x) / 2,
+      y: (o.y + d.y) / 2 + mismoPar.length * 36,
+    }
+    nodos.push(intermedio)
+    porNombre.set(nombreIntermedio, intermedio)
+    aristas.push({ id: nuevoId('e'), origen, destino: intermedio.id, ...campos })
+    aristas.push({ id: nuevoId('e'), origen: intermedio.id, destino, peso: 0, ficticia: true })
+    porLiteral.set(claveLiteral, [...mismoPar, aristas.length - 2])
   }
   return { dirigido, nodos, aristas }
 }
@@ -55,6 +102,14 @@ export function mismaConexion(a: Arista, origen: string, destino: string, dirigi
 
 export function existeArista(grafo: Grafo, origen: string, destino: string): boolean {
   return grafo.aristas.some((a) => mismaConexion(a, origen, destino, grafo.dirigido))
+}
+
+/** Como `existeArista`, pero busca los nodos por nombre (para aristas de un `GrafoPlano` todavía no cargado). */
+export function existeAristaPorNombre(grafo: Grafo, origenNombre: string, destinoNombre: string): boolean {
+  const porNombre = new Map(grafo.nodos.map((n) => [n.nombre, n.id]))
+  const origen = porNombre.get(origenNombre)
+  const destino = porNombre.get(destinoNombre)
+  return !!origen && !!destino && existeArista(grafo, origen, destino)
 }
 
 export function agregarNodo(grafo: Grafo, nombre: string, x: number, y: number): Grafo {
@@ -111,6 +166,6 @@ export function firmaEstructural(grafo: Grafo): string {
   return JSON.stringify([
     grafo.dirigido,
     grafo.nodos.map((n) => [n.id, n.nombre]),
-    grafo.aristas.map((a) => [a.id, a.origen, a.destino, a.peso, a.optimista, a.pesimista]),
+    grafo.aristas.map((a) => [a.id, a.origen, a.destino, a.peso, a.optimista, a.pesimista, a.actividad, a.ficticia]),
   ])
 }

@@ -2,7 +2,7 @@ import type { Core, EventObject, StylesheetJson } from 'cytoscape'
 import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import CytoscapeComponent from 'react-cytoscapejs'
 import { textoPeso } from '../lib/grafo'
-import type { Grafo, Paso } from '../types/graph'
+import type { Grafo, Paso, Resultado } from '../types/graph'
 
 export interface CanvasApi {
   autoLayout: () => void
@@ -19,6 +19,12 @@ interface Props {
   /** Transiciones de color al cambiar de paso. */
   animaciones: boolean
   paso: Paso | null
+  /**
+   * Resultado vigente, usado solo para derivar las etiquetas flujo/capacidad de Ford-Fulkerson
+   * a partir de `iteraciones[paso.iteracion]` en lugar de guardarlas repetidas en cada paso
+   * (ver `fordFulkerson.ts`): evita duplicar un objeto de todas las aristas por cada paso.
+   */
+  resultado?: Resultado | null
   /** Mientras hay un diálogo abierto se ignoran teclas y clicks. */
   bloqueado: boolean
   onDobleClickFondo: (x: number, y: number) => void
@@ -74,6 +80,7 @@ function estilos(dirigido: boolean, animaciones: boolean): StylesheetJson {
         'transition-duration': duracion,
       },
     },
+    { selector: 'edge.ficticia', style: { 'line-style': 'dashed', 'line-color': '#94a3b8', opacity: 0.85 } },
     { selector: 'edge.descartada', style: { 'line-color': '#cbd5e1', 'line-style': 'dotted', opacity: 0.6 } },
     {
       selector: 'edge.evaluada',
@@ -100,7 +107,7 @@ function estilos(dirigido: boolean, animaciones: boolean): StylesheetJson {
 }
 
 export function GraphCanvas(props: Props) {
-  const { ref, grafo, dirigido, animaciones, paso } = props
+  const { ref, grafo, dirigido, animaciones, paso, resultado } = props
   const cyRef = useRef<Core | null>(null)
   const origenRef = useRef<string | null>(null)
   const [origenPendiente, setOrigenPendiente] = useState<string | null>(null)
@@ -111,7 +118,10 @@ export function GraphCanvas(props: Props) {
   const elementos = useMemo(
     () => [
       ...grafo.nodos.map((n) => ({ data: { id: n.id, label: n.nombre, ancho: Math.max(34, n.nombre.length * 8 + 18) }, position: { x: n.x, y: n.y } })),
-      ...grafo.aristas.map((a) => ({ data: { id: a.id, source: a.origen, target: a.destino, label: textoPeso(a), peso: textoPeso(a) } })),
+      ...grafo.aristas.map((a) => ({
+        data: { id: a.id, source: a.origen, target: a.destino, label: textoPeso(a), peso: textoPeso(a) },
+        classes: a.ficticia ? 'ficticia' : undefined,
+      })),
     ],
     [grafo],
   )
@@ -188,9 +198,15 @@ export function GraphCanvas(props: Props) {
     if (!cy) return
     cy.batch(() => {
       cy.elements().removeClass(CLASES_PASO)
-      // Durante un paso la arista puede mostrar otro texto (flujo/capacidad) en lugar del peso.
+      // Flujo máximo: la etiqueta flujo/capacidad de este paso se deriva de `iteraciones`
+      // (no se guarda repetida en cada paso, ver `fordFulkerson.ts`).
+      const etiquetasFlujo =
+        resultado?.tipo === 'flujo' && paso?.iteracion !== undefined
+          ? new Map(resultado.iteraciones[paso.iteracion]?.arcos.map((a) => [a.aristaId, `${a.flujo}/${a.capacidad}`]))
+          : null
+      // Durante un paso la arista puede mostrar otro texto (flujo/capacidad, o la duración de PERT) en lugar del peso.
       cy.edges().forEach((a) => {
-        a.data('label', paso?.etiquetasAristas?.[a.id()] ?? a.data('peso'))
+        a.data('label', etiquetasFlujo?.get(a.id()) ?? paso?.etiquetasAristas?.[a.id()] ?? a.data('peso'))
       })
       if (!paso) return
       const marcar = (ids: string[] | undefined, clase: string) =>
@@ -204,7 +220,7 @@ export function GraphCanvas(props: Props) {
       marcar(paso.aristasCorte, 'corte')
       paso.aristasResultado?.forEach((id) => cy.getElementById(id).connectedNodes().addClass('resultado'))
     })
-  }, [paso, elementos])
+  }, [paso, elementos, resultado])
 
   // Si se borra el nodo origen pendiente, se cancela la arista en curso.
   useEffect(() => {

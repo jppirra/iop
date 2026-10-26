@@ -1,12 +1,12 @@
 import { parsearCsv } from './csv'
 import { parsearJson } from './json'
 import { parsearTexto } from './texto'
-import type { Formato, ResultadoParseo } from './tipos'
+import { LINEA_DIRIGIDO, type Formato, type ResultadoParseo } from './tipos'
 
 export type { ErrorParseo, Formato, GrafoPlano, NodoPlano, AristaPlana, ResultadoParseo } from './tipos'
 export { parsearCsv, parsearJson, parsearTexto }
 export { exportarCsv, exportarJson } from './exportar'
-export { leerPeso, leerTiempos, type Tiempos } from './tipos'
+export { erroresDireccion, leerPeso, leerTiempos, type Tiempos } from './tipos'
 
 export function detectarFormato(texto: string, nombreArchivo?: string): Formato {
   const extension = nombreArchivo?.split('.').pop()?.toLowerCase()
@@ -15,7 +15,9 @@ export function detectarFormato(texto: string, nombreArchivo?: string): Formato 
   if (extension === 'txt') return 'texto'
   const inicio = texto.replace(/^﻿/, '').trimStart()
   if (inicio.startsWith('{')) return 'json'
-  const primeraLinea = inicio.split(/\r?\n/)[0] ?? ''
+  const lineas = inicio.split(/\r?\n/)
+  // La línea opcional "dirigido=..." no define el formato: se mira la siguiente.
+  const primeraLinea = (LINEA_DIRIGIDO.test(lineas[0]?.trim() ?? '') ? lineas[1] : lineas[0]) ?? ''
   if (/^"?origen"?\s*[,;]/i.test(primeraLinea)) return 'csv'
   return 'texto'
 }

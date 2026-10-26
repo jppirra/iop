@@ -15,6 +15,10 @@ export interface Arista {
   /** PERT: tiempos optimista y pesimista de la actividad (el peso es el más probable). */
   optimista?: number
   pesimista?: number
+  /** CPM/PERT: nombre de la actividad (para distinguir actividades paralelas, mismo origen y destino). */
+  actividad?: string
+  /** CPM/PERT: actividad ficticia de duración 0, generada al resolver actividades paralelas. */
+  ficticia?: boolean
 }
 
 export interface Grafo {
@@ -133,6 +137,10 @@ export interface ActividadProyecto {
   aristaId: string
   desde: string // nombre del evento de inicio
   hasta: string // nombre del evento de fin
+  /** Nombre de la actividad, si se cargó uno (si no, se muestra "desde→hasta"). */
+  actividad?: string
+  /** Actividad ficticia de duración 0 (evento intermedio de una actividad paralela). */
+  ficticia?: boolean
   duracion: number // en PERT, el tiempo esperado
   optimista?: number
   masProbable?: number
@@ -161,7 +169,7 @@ export interface ResultadoProyecto {
   desvio?: number
 }
 
-/** Unión discriminada por `tipo`. Para Floyd/Bellman-Ford se suman variantes nuevas. */
+/** Unión discriminada por `tipo`. Para un algoritmo nuevo con un resultado de otra forma se suma una variante. */
 export type Resultado = ResultadoArbol | ResultadoRuta | ResultadoFlujo | ResultadoProyecto
 
 export interface Ejecucion<R extends Resultado = Resultado> {

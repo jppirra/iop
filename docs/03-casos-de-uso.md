@@ -47,26 +47,41 @@ punta. Qué casos están disponibles depende de la configuración (ver UC-6).
 - **UC-3.1 — Pegar aristas como texto**: una por línea,
   `origen destino peso` (nombres con espacio entre comillas); `#` comenta la
   línea. Para PERT, cinco valores:
-  `origen destino optimista másProbable pesimista`.
+  `origen destino optimista másProbable pesimista`. Con `actividad=Nombre` al
+  final (CPM/PERT con actividades paralelas, ver UC-3.3b).
 - **UC-3.2 — Pegar/subir un CSV** con encabezado `origen,destino,peso` (admite
-  `,` o `;` como separador), y opcionalmente las columnas `optimista` y
-  `pesimista`.
+  `,` o `;` como separador), y opcionalmente las columnas `optimista`,
+  `pesimista` y `actividad`.
 - **UC-3.3 — Pegar/subir JSON** con forma
   `{ dirigido, nodos: [...], aristas: [{origen,destino,peso}] }`; cada arista
-  puede llevar además `optimista` y `pesimista`.
+  puede llevar además `optimista`, `pesimista` y `actividad`.
+- **UC-3.3a — Declarar la dirección de la red**: CSV y texto aceptan una
+  línea opcional antes de las aristas, `dirigido=true` o `dirigido=false`
+  (sin distinguir mayúsculas). Si no se declara, se usa la opción actual de
+  la pantalla y la app lo avisa al cargar; también avisa si el algoritmo
+  elegido fuerza una dirección distinta al ejecutar.
+- **UC-3.3b — Cargar actividades paralelas (CPM/PERT)**: dos filas con el
+  mismo origen y destino son "arista repetida" salvo que cada una tenga su
+  propio nombre de actividad (`actividad=Nombre` en texto, columna
+  `actividad` en CSV/JSON); la app crea sola un evento intermedio y una
+  actividad ficticia de duración 0 para resolverlas.
 - **UC-3.4 — Subir un archivo** en vez de pegar texto (detecta el formato por
   extensión o por contenido).
 - **UC-3.5 — Ver errores de carga por línea**: peso no numérico, línea mal
-  formada, arista repetida, tiempos desordenados, etc., antes de confirmar la
-  carga.
+  formada, arista repetida (con la guía para actividades paralelas si
+  corresponde), A→B y B→A en una red no dirigida, tiempos desordenados, etc.,
+  antes de confirmar la carga.
 - **UC-3.6 — Reemplazar o agregar** el grafo cargado al que ya existe en el
-  lienzo (fusiona por nombre de nodo).
-- **UC-3.7 — Cargar un grafo grande**: con más de 20 nodos sin posición, el
-  grafo se acomoda solo al cargarlo (probado con 200 nodos).
+  lienzo (fusiona por nombre de nodo; si una arista ya existe, se informa
+  cuántas se actualizaron en vez de pisar el peso en silencio).
+- **UC-3.7 — Cargar un grafo grande**: con más de 30 nodos sin posición, el
+  grafo se acomoda solo al cargarlo (probado con 200 nodos, 19.900 aristas,
+  en menos de 500 ms).
 - **UC-3.8 — Descargar un JSON de ejemplo** para ver el formato, editarlo y
-  subirlo.
-- **UC-3.9 — Exportar el grafo actual** a JSON o CSV (conserva los tiempos de
-  PERT).
+  subirlo; la carpeta [`ejemplos/`](../ejemplos/) del repositorio tiene un CSV
+  y un JSON por algoritmo.
+- **UC-3.9 — Exportar el grafo actual** a JSON o CSV (conserva la dirección,
+  los tiempos de PERT y el nombre de actividad).
 
 ## 4. Ejecutar un algoritmo
 

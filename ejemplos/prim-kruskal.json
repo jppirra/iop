@@ -1,0 +1,13 @@
+{
+  "dirigido": false,
+  "nodos": ["1", "2", "3", "4", "5"],
+  "aristas": [
+    { "origen": "1", "destino": "2", "peso": 4 },
+    { "origen": "1", "destino": "3", "peso": 2 },
+    { "origen": "2", "destino": "3", "peso": 1 },
+    { "origen": "2", "destino": "4", "peso": 5 },
+    { "origen": "3", "destino": "4", "peso": 8 },
+    { "origen": "3", "destino": "5", "peso": 10 },
+    { "origen": "4", "destino": "5", "peso": 2 }
+  ]
+}

@@ -59,10 +59,13 @@ Al abrir la web se elige el algoritmo y cómo cargar el grafo: carga manual (dib
 - Para PERT, la línea de texto lleva cinco valores (`origen destino optimista másProbable pesimista`); en CSV y JSON se suman `optimista` y `pesimista` (el `peso` es el más probable).
 - CSV con encabezado `origen,destino,peso` (también acepta `;` como separador, como exporta Excel en español).
 - JSON: `{ "dirigido": false, "nodos": [...], "aristas": [{ "origen", "destino", "peso" }] }`.
-- Los nodos se crean a partir de las aristas. Hasta 20 nodos se dibujan en círculo; con más, se acomodan solos (Auto-layout), así un grafo de 200 nodos se puede leer apenas se carga.
-- Los errores se informan por línea (peso no numérico, línea mal formada, arista repetida, etc.).
-- Se puede reemplazar el grafo o agregar al actual, y exportar el grafo a JSON o CSV.
-- "Descargar JSON de ejemplo" baja `grafo-ejemplo.json` (7 nodos, 11 aristas) para ver el formato, editarlo y subirlo.
+- **Dirección declarada**: antes de las aristas, CSV y texto aceptan una línea opcional `dirigido=true` o `dirigido=false` (sin distinguir mayúsculas; en JSON es el campo `"dirigido"` de siempre). Al cargar se avisa siempre cómo se interpretó la red: si el archivo no la declara, se usa la opción actual de la pantalla (y se dice explícitamente), y si el algoritmo elegido fuerza una dirección (Prim/Kruskal/Dijkstra no dirigido forzado no aplica, pero CPM/PERT sí fuerzan dirigido), también se avisa.
+- **A→B y B→A en una red no dirigida son la misma arista**: si aparecen las dos (con capacidades o pesos distintos por sentido), es un error de carga que explica cómo resolverlo — cargar la red como dirigida (`dirigido=true`) si de verdad son dos conexiones distintas. En una red dirigida, A→B y B→A son arcos independientes (por ejemplo, Flujo Máximo con capacidades distintas por sentido).
+- **Actividades paralelas (CPM/PERT)**: dos filas con el mismo origen y destino son, por defecto, un error ("arista repetida"); si cada una tiene su propio nombre de actividad —columna `actividad` en CSV/JSON, o `actividad=Nombre` al final de la línea de texto (no un token suelto, porque sería ambiguo con los cinco valores de PERT)—, se tratan como actividades paralelas: la app agrega sola un evento intermedio (por ejemplo `2'`) y una actividad ficticia de duración 0 para resolverlas, igual que a mano con lápiz y papel. `actividad` se exporta y sobrevive un ciclo de exportar → importar.
+- Los nodos se crean a partir de las aristas. Hasta 30 nodos se dibujan en círculo; con más, se acomodan solos (Auto-layout), así un grafo de 200 nodos se puede leer apenas se carga.
+- Los errores se informan por línea (peso no numérico, línea mal formada, arista repetida, A→B/B→A en una red no dirigida, etc.).
+- Se puede reemplazar el grafo o agregar al actual (si una arista ya existe se informa cuántas se actualizaron), y exportar el grafo a JSON o CSV.
+- "Descargar JSON de ejemplo" baja `grafo-ejemplo.json` (7 nodos, 11 aristas) para ver el formato, editarlo y subirlo. La carpeta [`ejemplos/`](ejemplos/) tiene un CSV y un JSON por algoritmo (Prim/Kruskal, Dijkstra, Flujo Máximo con capacidades por sentido, CPM con actividades paralelas, PERT).
 
 **Ejecución**
 
@@ -126,7 +129,7 @@ src/
 
 ### Agregar un algoritmo nuevo
 
-`src/algorithms/index.ts` registra automáticamente (con `import.meta.glob`) todo archivo de esa carpeta que exporte `estrategia`. Para sumar Bellman-Ford o Floyd-Warshall:
+`src/algorithms/index.ts` registra automáticamente (con `import.meta.glob`) todo archivo de esa carpeta que exporte `estrategia`. Para sumar un algoritmo nuevo (por ejemplo, uno de rutas múltiples o de asignación):
 
 1. Crear `src/algorithms/<nombre>.ts` con la función pura que devuelve `{ pasos: Paso[], resultado }`.
 2. Exportar `estrategia: Estrategia` (nombre, grupo, parámetros, `validar`, `ejecutar`).
