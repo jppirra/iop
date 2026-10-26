@@ -412,7 +412,13 @@ function ResultadoProyectoVista({ resultado, paso, final }: { resultado: Resulta
                 {resultado.actividades.map((a) => (
                   <tr key={a.aristaId} className={a.critica ? 'bg-blue-50 text-blue-900' : ''}>
                     <td className="whitespace-nowrap font-medium">
-                      {a.desde}→{a.hasta}
+                      <div>{a.actividad ?? `${a.desde}→${a.hasta}`}</div>
+                      {a.actividad && (
+                        <div className="text-[10px] font-normal text-slate-400">
+                          {a.desde}→{a.hasta}
+                        </div>
+                      )}
+                      {a.ficticia && <div className="text-[10px] font-normal uppercase text-amber-600">ficticia</div>}
                     </td>
                     {esPert && (
                       <td className="whitespace-nowrap text-right tabular-nums">

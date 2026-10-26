@@ -225,6 +225,8 @@ export function calcularProyecto(
       aristaId: a.id,
       desde: nombre(a.origen),
       hasta: nombre(a.destino),
+      actividad: a.actividad,
+      ficticia: a.ficticia,
       ...t.get(a.id)!,
       es,
       ef: limpiar(es + dur(a)),
