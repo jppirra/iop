@@ -169,7 +169,7 @@ export interface ResultadoProyecto {
   desvio?: number
 }
 
-/** Unión discriminada por `tipo`. Para Floyd/Bellman-Ford se suman variantes nuevas. */
+/** Unión discriminada por `tipo`. Para un algoritmo nuevo con un resultado de otra forma se suma una variante. */
 export type Resultado = ResultadoArbol | ResultadoRuta | ResultadoFlujo | ResultadoProyecto
 
 export interface Ejecucion<R extends Resultado = Resultado> {

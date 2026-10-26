@@ -126,7 +126,7 @@ src/
 
 ### Agregar un algoritmo nuevo
 
-`src/algorithms/index.ts` registra automáticamente (con `import.meta.glob`) todo archivo de esa carpeta que exporte `estrategia`. Para sumar Bellman-Ford o Floyd-Warshall:
+`src/algorithms/index.ts` registra automáticamente (con `import.meta.glob`) todo archivo de esa carpeta que exporte `estrategia`. Para sumar un algoritmo nuevo (por ejemplo, uno de rutas múltiples o de asignación):
 
 1. Crear `src/algorithms/<nombre>.ts` con la función pura que devuelve `{ pasos: Paso[], resultado }`.
 2. Exportar `estrategia: Estrategia` (nombre, grupo, parámetros, `validar`, `ejecutar`).

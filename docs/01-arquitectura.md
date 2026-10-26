@@ -207,8 +207,8 @@ Esto es lo que hace que agregar un algoritmo nuevo no requiera tocar `App.tsx`
 ni el selector: alcanza con crear el archivo. `proyecto.ts` y `utils.ts` no
 exportan `estrategia`, por eso no aparecen como algoritmos.
 
-**Para sumar un algoritmo nuevo** (por ejemplo Bellman-Ford o
-Floyd-Warshall):
+**Para sumar un algoritmo nuevo** (por ejemplo, uno de rutas múltiples o de
+asignación):
 
 1. Crear `src/algorithms/<nombre>.ts` con una función pura que devuelva
    `{ pasos, resultado }`.

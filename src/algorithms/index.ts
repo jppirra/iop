@@ -4,7 +4,7 @@ import type { Estrategia } from '../types/graph'
  * Registro de estrategias.
  *
  * Cada archivo de esta carpeta que exporte `estrategia` se registra solo:
- * para sumar Bellman-Ford o Floyd-Warshall alcanza con crear
+ * para sumar un algoritmo nuevo alcanza con crear
  * `src/algorithms/<nombre>.ts` exportando `estrategia: Estrategia`
  * (y, si devuelve un nuevo `tipo` de resultado, su vista en ResultsPanel).
  * Queda oculto hasta sumar su id a `estrategias` en src/config/config.json.
