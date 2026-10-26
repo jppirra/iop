@@ -171,7 +171,9 @@ describe('Flujo máximo - Ford-Fulkerson', () => {
     // inicio + 2 iteraciones (camino y aumento) + condición de parada + resultado
     expect(pasos).toHaveLength(7)
     expect(pasos[1].descripcion).toContain('k = min(10, 8) = 8')
-    expect(pasos.at(-1)!.etiquetasAristas![grafo.aristas[0].id]).toBe('8/10')
+    // El flujo/capacidad de cada arco ya no se guarda repetido en cada paso (ver fordFulkerson.ts):
+    // se deriva de `iteraciones[paso.iteracion].arcos`, verificado arriba.
+    expect(pasos.at(-1)!.etiquetasAristas).toBeUndefined()
   })
 
   it('el corte mínimo tiene la misma capacidad que el flujo máximo', () => {
@@ -271,5 +273,58 @@ describe('grafos grandes (200 nodos)', () => {
       expect(flujo.flujoMaximo).toBeGreaterThan(0)
       expect(flujo.corte.capacidad).toBe(flujo.flujoMaximo)
     }
+  })
+})
+
+describe('memoria de los pasos (Prim y Ford-Fulkerson)', () => {
+  /** Grafo completo de `n` nodos: el peor caso para `aristasEvaluadas` de Prim (todo el corte). */
+  const completo = (n: number): Grafo => {
+    const nodos = Array.from({ length: n }, (_, i) => ({ id: `n${i}`, nombre: String(i + 1), x: 0, y: 0 }))
+    const aristas = []
+    let e = 0
+    for (let i = 0; i < n; i++)
+      for (let j = i + 1; j < n; j++) aristas.push({ id: `e${e++}`, origen: nodos[i].id, destino: nodos[j].id, peso: 1 + ((i * 31 + j * 17) % 50) })
+    return { dirigido: false, nodos, aristas }
+  }
+
+  it('Prim en un grafo completo de 200 nodos (19.900 aristas) pesa menos de 3 MB', () => {
+    const grafo = completo(200)
+    const ejecucion = prim(grafo, grafo.nodos[0].id)
+    expect(ejecucion.resultado.conexo).toBe(true)
+    expect(JSON.stringify(ejecucion).length).toBeLessThan(3 * 1024 * 1024)
+  })
+
+  /**
+   * Red con ~1.300 arcos pero un único canal de aumento (S→1→T, capacidad 5): todos los demás
+   * arcos que tocan a S o a T tienen capacidad 0 (no se recorren) y los arcos entre nodos
+   * intermedios (irrelevantes para el flujo) tienen capacidad 999. Así el flujo máximo se resuelve
+   * en una sola iteración, sin dejar de tener ~1.300 arcos para medir el tamaño de `ejecucion`.
+   */
+  const redGrande = (n = 51): Grafo => {
+    const nodos = Array.from({ length: n }, (_, i) => ({ id: `n${i}`, nombre: i === 0 ? 'S' : i === n - 1 ? 'T' : String(i), x: 0, y: 0 }))
+    const aristas = []
+    let e = 0
+    for (let i = 0; i < n; i++)
+      for (let j = i + 1; j < n; j++) {
+        const esCanal = (i === 0 && j === 1) || (i === 1 && j === n - 1)
+        const capacidad = esCanal ? 5 : i === 0 || j === n - 1 ? 0 : 999
+        aristas.push({ id: `e${e++}`, origen: nodos[i].id, destino: nodos[j].id, peso: capacidad })
+      }
+    return { dirigido: true, nodos, aristas }
+  }
+
+  it('Ford-Fulkerson en una red de ~1.300 arcos pesa menos de 3 MB', () => {
+    const grafo = redGrande()
+    const ejecucion = fordFulkerson(grafo, grafo.nodos[0].id, grafo.nodos.at(-1)!.id)
+    expect(grafo.aristas.length).toBeGreaterThan(1200)
+    expect(ejecucion.resultado.flujoMaximo).toBeGreaterThan(0)
+    expect(JSON.stringify(ejecucion).length).toBeLessThan(3 * 1024 * 1024)
+  })
+
+  it('los ejemplos del libro siguen dando los mismos resultados', () => {
+    const { grafo, id } = ejemplo('lauderdale')
+    expect(prim(grafo, id('1')).resultado.total).toBe(16)
+    const { grafo: red, id: idRed } = ejemplo('red-transmision')
+    expect(fordFulkerson(red, idRed('S'), idRed('T')).resultado.flujoMaximo).toBe(18)
   })
 })
