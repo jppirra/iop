@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { EJEMPLO_JSON } from '../examples/libro'
-import { detectarFormato, exportarCsv, exportarJson, parsear, type Formato, type GrafoPlano } from '../parsers'
+import { detectarFormato, erroresDireccion, exportarCsv, exportarJson, parsear, type Formato, type GrafoPlano } from '../parsers'
+import { existeAristaPorNombre } from '../lib/grafo'
 import type { Grafo } from '../types/graph'
 
 interface Props {
@@ -37,7 +38,14 @@ export function BulkLoadPanel({ grafo, mostrarExportar, mostrarEjemplo, onCargar
 
   const formatoReal = formato === 'auto' ? detectarFormato(texto, archivo) : formato
   const resultado = useMemo(() => (texto.trim() ? parsear(texto, formatoReal) : null), [texto, formatoReal])
-  const valido = !!resultado?.grafo
+  // Si el archivo no declara "dirigido", la dirección final la define la pantalla (grafo.dirigido):
+  // recién ahí se puede saber si A→B y B→A son en realidad la misma conexión (ver erroresDireccion).
+  const erroresExtra = useMemo(
+    () => (resultado?.grafo && resultado.grafo.dirigido === undefined ? erroresDireccion(resultado.grafo, grafo.dirigido) : []),
+    [resultado, grafo.dirigido],
+  )
+  const errores = [...(resultado?.errores ?? []), ...erroresExtra]
+  const valido = !!resultado?.grafo && errores.length === 0
 
   const leerArchivo = async (f: File) => {
     const contenido = await f.text()
@@ -50,8 +58,14 @@ export function BulkLoadPanel({ grafo, mostrarExportar, mostrarEjemplo, onCargar
   const cargar = (modo: 'reemplazar' | 'agregar') => {
     if (!resultado?.grafo) return
     onCargar(resultado.grafo, modo)
+    // Hoy actualiza el peso en silencio; al menos se informa cuántas ya existían.
+    const yaExistian =
+      modo === 'agregar' ? resultado.grafo.aristas.filter((a) => existeAristaPorNombre(grafo, a.origen, a.destino)).length : 0
     setMensaje(
-      `${modo === 'reemplazar' ? 'Se cargaron' : 'Se agregaron'} ${resultado.grafo.nodos.length} nodos y ${resultado.grafo.aristas.length} aristas.`,
+      `${modo === 'reemplazar' ? 'Se cargaron' : 'Se agregaron'} ${resultado.grafo.nodos.length} nodos y ${resultado.grafo.aristas.length} aristas.` +
+        (yaExistian > 0
+          ? ` ${yaExistian} ${yaExistian === 1 ? 'arista ya existía y se actualizó su peso' : 'aristas ya existían y se actualizó su peso'}.`
+          : ''),
     )
   }
 
@@ -110,13 +124,13 @@ export function BulkLoadPanel({ grafo, mostrarExportar, mostrarEjemplo, onCargar
         </p>
       )}
 
-      {resultado && resultado.errores.length > 0 && (
+      {resultado && errores.length > 0 && (
         <div className="max-h-40 overflow-auto rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
           <p className="mb-1 font-semibold">
-            {resultado.errores.length} {resultado.errores.length === 1 ? 'error' : 'errores'}:
+            {errores.length} {errores.length === 1 ? 'error' : 'errores'}:
           </p>
           <ul className="space-y-0.5">
-            {resultado.errores.map((e, i) => (
+            {errores.map((e, i) => (
               <li key={i}>
                 <span className="font-medium">{e.ubicacion}:</span> {e.mensaje}
               </li>

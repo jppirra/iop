@@ -34,7 +34,7 @@ import { leerTiempos, type GrafoPlano, type Tiempos } from './parsers'
 import type { ClaseLeyenda, ClaveParametro, Ejecucion, Estrategia, Grafo, Parametros } from './types/graph'
 
 /** Hasta esta cantidad, los nodos cargados sin posición se dibujan en círculo. */
-const NODOS_EN_CIRCULO = 20
+const NODOS_EN_CIRCULO = 30
 
 // Un número, o los tres tiempos de PERT separados por espacio, ";" o "/".
 const leerEntradaPeso = (v: string): Tiempos | string => {
@@ -234,16 +234,24 @@ export default function App() {
   }
 
   const alCargar = (plano: GrafoPlano, modo: 'reemplazar' | 'agregar') => {
-    const dirigido = (d: boolean) => dirigidoPermitido && d
+    const dirigidoCrudo = modo === 'reemplazar' ? (plano.dirigido ?? grafo.dirigido) : grafo.dirigido
+    const dirigidoResultante = dirigidoPermitido && dirigidoCrudo
     aplicar((g) =>
-      modo === 'reemplazar'
-        ? desdePlano(plano, dirigido(plano.dirigido ?? g.dirigido))
-        : desdePlano(plano, dirigido(g.dirigido), g),
+      modo === 'reemplazar' ? desdePlano(plano, dirigidoResultante) : desdePlano(plano, dirigidoResultante, g),
     )
     // Un grafo grande sin posiciones no se lee en círculo: se acomoda solo.
     const sinPosicion = plano.nodos.some((n) => n.x === undefined || n.y === undefined)
     if (sinPosicion && plano.nodos.length > NODOS_EN_CIRCULO) requestAnimationFrame(() => canvas.current?.autoLayout())
     else ajustarLuego()
+
+    // Aviso de cómo se interpretó la dirección: si el archivo no la declara, se usó la de la pantalla;
+    // si la estrategia elegida fuerza una dirección, el resultado puede terminar siendo otra al ejecutar.
+    let mensaje = `Red cargada como ${dirigidoResultante ? 'dirigida' : 'no dirigida'}.`
+    if (modo === 'agregar') mensaje += ' Se agregó al grafo existente: se mantiene su dirección actual.'
+    else if (plano.dirigido === undefined) mensaje += ' El archivo no indica si es dirigida: se usó la opción actual de la pantalla.'
+    if (estrategia.forzarNoDirigido || estrategia.forzarDirigido)
+      mensaje += ` ${estrategia.nombre} usa siempre grafo ${estrategia.forzarDirigido ? 'dirigido' : 'no dirigido'} al ejecutar.`
+    avisar(mensaje)
   }
 
   const cargarEjemplo = (id: string) => {
@@ -417,6 +425,7 @@ export default function App() {
               dirigido={grafoEfectivo.dirigido}
               animaciones={config.animaciones}
               paso={paso}
+              resultado={vigente?.resultado ?? null}
               bloqueado={abierto}
               onDobleClickFondo={alDobleClickFondo}
               onDobleClickNodo={alDobleClickNodo}
