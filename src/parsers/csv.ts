@@ -1,4 +1,4 @@
-import { completarNodos, leerTiempos, type AristaPlana, type ErrorParseo, type ResultadoParseo } from './tipos'
+import { completarNodos, leerTiempos, LINEA_DIRIGIDO, type AristaPlana, type ErrorParseo, type ResultadoParseo } from './tipos'
 
 /** Separa una fila CSV respetando comillas dobles ("a, b" y "" como comilla escapada). */
 export function separarFilaCsv(fila: string, separador: string): string[] {
@@ -25,13 +25,21 @@ export function separarFilaCsv(fila: string, separador: string): string[] {
 
 /**
  * CSV con encabezado `origen,destino,peso` (en cualquier orden, sin distinguir mayúsculas).
- * Para PERT se suman las columnas `optimista` y `pesimista` (el peso es el tiempo más probable).
+ * Para PERT se suman las columnas `optimista` y `pesimista` (el peso es el tiempo más probable);
+ * para CPM/PERT con actividades paralelas, la columna opcional `actividad`.
+ * Antes del encabezado se acepta una línea opcional `dirigido=true`/`dirigido=false`.
  * También acepta `;` como separador (Excel en español); en ese caso el peso puede usar coma decimal.
  */
 export function parsearCsv(texto: string): ResultadoParseo {
   const errores: ErrorParseo[] = []
   const lineas = texto.split(/\r?\n/)
-  const iEncabezado = lineas.findIndex((l) => l.trim() !== '')
+  const iPrimera = lineas.findIndex((l) => l.trim() !== '')
+  if (iPrimera === -1) return { grafo: null, errores: [{ ubicacion: 'General', mensaje: 'El CSV está vacío.' }] }
+
+  const primera = lineas[iPrimera].replace(/^﻿/, '').trim()
+  const mDirigido = LINEA_DIRIGIDO.exec(primera)
+  const dirigido = mDirigido ? mDirigido[1].toLowerCase() === 'true' : undefined
+  const iEncabezado = mDirigido ? lineas.findIndex((l, i) => i > iPrimera && l.trim() !== '') : iPrimera
   if (iEncabezado === -1) return { grafo: null, errores: [{ ubicacion: 'General', mensaje: 'El CSV está vacío.' }] }
 
   const encabezadoCrudo = lineas[iEncabezado].replace(/^﻿/, '')
@@ -40,6 +48,7 @@ export function parsearCsv(texto: string): ResultadoParseo {
   const columnas = { origen: encabezado.indexOf('origen'), destino: encabezado.indexOf('destino'), peso: encabezado.indexOf('peso') }
   const iOptimista = encabezado.indexOf('optimista')
   const iPesimista = encabezado.indexOf('pesimista')
+  const iActividad = encabezado.indexOf('actividad')
   const faltantes = Object.entries(columnas).filter(([, i]) => i === -1).map(([k]) => k)
   if (faltantes.length > 0) {
     return {
@@ -80,11 +89,12 @@ export function parsearCsv(texto: string): ResultadoParseo {
       errores.push({ ubicacion, mensaje: `La arista une el nodo ${origen} consigo mismo.` })
       continue
     }
-    aristas.push({ origen, destino, ...tiempos, ubicacion })
+    const actividad = iActividad !== -1 && campos[iActividad] !== '' ? campos[iActividad] : undefined
+    aristas.push({ origen, destino, ...tiempos, actividad, ubicacion })
   }
 
-  const grafo = completarNodos(aristas, [], errores)
+  const grafo = completarNodos(aristas, [], errores, dirigido)
   if (grafo.aristas.length === 0 && errores.length === 0)
     errores.push({ ubicacion: 'General', mensaje: 'El CSV no tiene filas de aristas.' })
-  return { grafo: errores.length ? null : grafo, errores }
+  return { grafo: errores.length ? null : { ...grafo, dirigido }, errores }
 }

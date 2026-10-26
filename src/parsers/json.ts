@@ -7,6 +7,7 @@ const esNombre = (v: unknown): v is string | number =>
 /**
  * JSON: { "dirigido": false, "nodos": [...], "aristas": [{ "origen", "destino", "peso" }] }
  * Para PERT cada arista puede llevar además "optimista" y "pesimista" (el peso es el tiempo más probable).
+ * Para CPM/PERT con actividades paralelas, cada arista puede llevar "actividad" (nombre).
  * Los nodos pueden ser strings/números o objetos { "nombre", "x", "y" }. "nodos" es opcional.
  */
 export function parsearJson(texto: string): ResultadoParseo {
@@ -65,8 +66,17 @@ export function parsearJson(texto: string): ResultadoParseo {
         errores.push({ ubicacion, mensaje: `La arista une el nodo ${origen} consigo mismo.` })
         return
       }
+      let actividad: string | undefined
+      if (a.actividad !== undefined) {
+        if (typeof a.actividad !== 'string' || a.actividad.trim() === '') {
+          errores.push({ ubicacion, mensaje: '"actividad" tiene que ser un nombre no vacío.' })
+          return
+        }
+        actividad = a.actividad.trim()
+      }
+      const ficticia = a.ficticia === true ? true : undefined
       if (a.optimista === undefined && a.pesimista === undefined) {
-        aristas.push({ origen, destino, peso, ubicacion })
+        aristas.push({ origen, destino, peso, actividad, ficticia, ubicacion })
         return
       }
       const { optimista, pesimista } = a
@@ -74,10 +84,10 @@ export function parsearJson(texto: string): ResultadoParseo {
         errores.push({ ubicacion, mensaje: 'Los tiempos tienen que ser números y cumplir optimista ≤ peso (más probable) ≤ pesimista.' })
         return
       }
-      aristas.push({ origen, destino, peso, optimista, pesimista, ubicacion })
+      aristas.push({ origen, destino, peso, optimista, pesimista, actividad, ficticia, ubicacion })
     })
   }
 
-  const grafo = completarNodos(aristas, nodos, errores)
+  const grafo = completarNodos(aristas, nodos, errores, dirigido)
   return { grafo: errores.length ? null : { ...grafo, dirigido }, errores }
 }
