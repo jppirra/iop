@@ -57,9 +57,17 @@ export function PantallaInicio({ estrategias, modos, mostrarEjemplos, estrategia
       <div role="dialog" aria-labelledby="titulo-inicio" className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 id="titulo-inicio" className="text-xl font-bold text-teal-800">
-              {NOMBRE_APP}
-            </h2>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 id="titulo-inicio" className="text-xl font-bold text-teal-800">
+                {NOMBRE_APP}
+              </h2>
+              <a
+                href="/presentacion"
+                className="rounded-full border border-teal-600 px-3 py-0.5 text-xs font-medium text-teal-700 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-600"
+              >
+                Ver presentación →
+              </a>
+            </div>
             <p className="text-sm text-slate-500">{SUBTITULO_APP}</p>
           </div>
           {cerrable && (

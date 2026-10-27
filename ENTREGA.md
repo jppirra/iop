@@ -1,7 +1,7 @@
 # Documento de entrega — TPI Modelos de red
 
 **Investigación Operativa · Ingeniería en Sistemas de Información · UTN**
-**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.001.015**
+**Grupo 3 — IOP 2026** · Versión de la aplicación: **v1.002.01**
 
 | Integrante | Legajo |
 | --- | --- |

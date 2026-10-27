@@ -1,6 +1,6 @@
 # Grupo 3 - IOP 2026
 
-Versión **v1.001.015**
+Versión **v1.002.01**
 
 > Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Informe de avance (4 páginas): [INFORME.md](INFORME.md), que también se ve con el estilo de la app en `/informe`. Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
