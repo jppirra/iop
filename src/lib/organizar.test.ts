@@ -13,37 +13,45 @@ const sinSuperposiciones = (pos: Record<string, { x: number; y: number }>) => {
   expect(new Set(claves).size).toBe(claves.length)
 }
 
+const caja = (pos: Record<string, { x: number; y: number }>) => {
+  const xs = Object.values(pos).map((p) => p.x)
+  const ys = Object.values(pos).map((p) => p.y)
+  return { ancho: Math.max(...xs) - Math.min(...xs), alto: Math.max(...ys) - Math.min(...ys) }
+}
+
 describe('organizar', () => {
-  it('dirigido: toda arista va hacia la derecha y cada columna queda en orden numérico', () => {
-    const g = grafo(true, ['10', '3', '1', '2', '4'], [['1', '2'], ['1', '3'], ['2', '4'], ['3', '4'], ['4', '10'], ['1', '10']])
-    const pos = organizar(g, true)
-    for (const a of g.aristas) expect(pos[a.destino].x).toBeGreaterThan(pos[a.origen].x)
-    expect(pos['2'].x).toBe(pos['3'].x)
-    expect(pos['2'].y).toBeLessThan(pos['3'].y)
+  it('una cadena larga queda en matriz (no en una sola fila)', () => {
+    const nombres = Array.from({ length: 60 }, (_, i) => String(i + 1))
+    const aristas = nombres.slice(1).map((n, i): [string, string] => [nombres[i], n])
+    const pos = organizar(grafo(true, nombres, aristas), true, 16 / 9)
+    const { ancho, alto } = caja(pos)
+    expect(alto).toBeGreaterThan(0)
+    expect(ancho / alto).toBeGreaterThan(0.8)
+    expect(ancho / alto).toBeLessThan(4)
     sinSuperposiciones(pos)
   })
 
-  it('dirigido con ciclo y no dirigido: ubica todos los nodos sin superponerlos', () => {
-    const aristas: [string, string][] = [['1', '2'], ['2', '3'], ['3', '1'], ['3', '4']]
+  it('nombres numéricos: se llena por filas en orden numérico', () => {
+    const pos = organizar(grafo(false, ['10', '3', '1', '2', '4', '5', '6', '7', '8', '9'], [['10', '1']]), false, 1)
+    expect(pos['1'].x).toBeLessThan(pos['2'].x)
+    expect(pos['2'].x).toBeLessThan(pos['3'].x)
+    expect(pos['10'].y).toBeGreaterThan(pos['1'].y)
+    sinSuperposiciones(pos)
+  })
+
+  it('nombres no numéricos: sigue el orden de las aristas', () => {
+    const pos = organizar(grafo(true, ['A', 'B', 'C'], [['C', 'B'], ['B', 'A']]), true, 10)
+    expect(pos['C'].x).toBeLessThan(pos['B'].x)
+    expect(pos['B'].x).toBeLessThan(pos['A'].x)
+  })
+
+  it('grafos con ciclos, no dirigidos o sin aristas: ubica todos sin superponerlos', () => {
+    const aristas: [string, string][] = [['A', 'B'], ['B', 'C'], ['C', 'A'], ['C', 'D']]
     for (const dirigido of [true, false]) {
-      const pos = organizar(grafo(dirigido, ['1', '2', '3', '4', '5'], aristas), dirigido)
+      const pos = organizar(grafo(dirigido, ['A', 'B', 'C', 'D', 'E'], aristas), dirigido)
       expect(Object.keys(pos)).toHaveLength(5)
       sinSuperposiciones(pos)
     }
-  })
-
-  it('no dirigido: arranca desde el nodo de menor número', () => {
-    const pos = organizar(grafo(false, ['B', 'A', 'C'], [['B', 'A'], ['B', 'C']]), false)
-    expect(pos['A'].x).toBeLessThan(pos['B'].x)
-    expect(pos['B'].x).toBeLessThan(pos['C'].x)
-  })
-
-  it('sin aristas: grilla en orden numérico', () => {
-    const pos = organizar(grafo(false, ['10', '2', '1', '3'], []), false)
-    expect(pos['1']).toEqual({ x: 0, y: 0 })
-    expect(pos['2'].x).toBeGreaterThan(0)
-    expect(pos['3'].y).toBeGreaterThan(0)
-    expect(pos['10'].x).toBe(pos['2'].x)
-    sinSuperposiciones(pos)
+    sinSuperposiciones(organizar(grafo(false, ['x', 'y', 'z'], []), false))
   })
 })

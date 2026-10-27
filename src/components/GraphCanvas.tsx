@@ -8,7 +8,7 @@ import { PulsoResultado } from './PulsoResultado'
 
 export interface CanvasApi {
   autoLayout: () => void
-  /** Columnas según las aristas, nodos ordenados por nombre (ver `lib/organizar`). */
+  /** Matriz con la proporción del lienzo, nodos en orden numérico o según las aristas (ver `lib/organizar`). */
   organizar: () => void
   ajustar: () => void
 }
@@ -268,7 +268,8 @@ export function GraphCanvas(props: Props) {
     organizar() {
       const cy = cyRef.current
       if (!cy || cy.nodes().empty()) return
-      const posiciones = organizar(propsRef.current.grafo, propsRef.current.dirigido)
+      const proporcion = cy.width() / Math.max(1, cy.height())
+      const posiciones = organizar(propsRef.current.grafo, propsRef.current.dirigido, proporcion)
       cy.nodes().positions((n) => posiciones[n.id()] ?? n.position())
       propsRef.current.onMover(posiciones)
       cy.fit(undefined, 50)

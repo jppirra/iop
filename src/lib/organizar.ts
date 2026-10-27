@@ -1,9 +1,12 @@
-import type { Grafo } from '../types/graph'
+import type { Grafo, Nodo } from '../types/graph'
 
 type Posiciones = Record<string, { x: number; y: number }>
 
-const SEPARACION_X = 110
-const SEPARACION_Y = 80
+const SEPARACION_X = 80
+const SEPARACION_Y = 70
+const ALTO_NODO = 34
+/** Las columnas impares bajan un poco: así una arista entre dos nodos de la misma fila no atraviesa el del medio. */
+const ESCALON = 0.35
 
 /** Orden natural: "2" antes que "10", "A2" antes que "A10"; los nombres no numéricos, alfabéticos. */
 const compararNombres = (a: string, b: string) => a.localeCompare(b, 'es', { numeric: true, sensitivity: 'base' })
@@ -12,28 +15,11 @@ const compararNombres = (a: string, b: string) => a.localeCompare(b, 'es', { num
 const anchoNodo = (nombre: string) => Math.max(34, nombre.length * 8 + 18)
 
 /**
- * Acomoda los nodos en columnas de izquierda a derecha siguiendo las aristas, y dentro de cada
- * columna los ordena por nombre (numérico si son números). Determinístico y sin superposiciones.
- *
- * - Dirigido: la columna de un nodo es el camino más largo desde un nodo sin predecesores, así
- *   toda arista va hacia la derecha (redes CPM/PERT, flujo). Los ciclos se resuelven con BFS.
- * - No dirigido: BFS desde el nodo de menor nombre de cada componente.
- * - Sin aristas: grilla en orden.
+ * Nivel de cada nodo siguiendo las aristas.
+ * - Dirigido: camino más largo desde un nodo sin predecesores (toda arista avanza de nivel).
+ * - No dirigido, o nodos en ciclos: BFS desde el nodo de menor nombre de cada componente.
  */
-export function organizar(grafo: Grafo, dirigido: boolean): Posiciones {
-  const orden = [...grafo.nodos].sort((a, b) => compararNombres(a.nombre, b.nombre))
-  const posiciones: Posiciones = {}
-  if (orden.length === 0) return posiciones
-
-  if (grafo.aristas.length === 0) {
-    const columnas = Math.ceil(Math.sqrt(orden.length))
-    const paso = Math.max(...orden.map((n) => anchoNodo(n.nombre))) + SEPARACION_X / 2
-    orden.forEach((n, i) => {
-      posiciones[n.id] = { x: (i % columnas) * paso, y: Math.floor(i / columnas) * SEPARACION_Y }
-    })
-    return posiciones
-  }
-
+function niveles(grafo: Grafo, dirigido: boolean, orden: Nodo[]): Map<string, number> {
   const salientes = new Map<string, string[]>(orden.map((n) => [n.id, []]))
   const entrantes = new Map<string, string[]>(orden.map((n) => [n.id, []]))
   for (const a of grafo.aristas) {
@@ -46,51 +32,66 @@ export function organizar(grafo: Grafo, dirigido: boolean): Posiciones {
     }
   }
 
-  const capa = new Map<string, number>()
-
+  const nivel = new Map<string, number>()
   if (dirigido) {
-    // Kahn con camino más largo.
     const pendientes = new Map(orden.map((n) => [n.id, entrantes.get(n.id)!.length]))
     const cola = orden.filter((n) => pendientes.get(n.id) === 0).map((n) => n.id)
-    cola.forEach((id) => capa.set(id, 0))
+    cola.forEach((id) => nivel.set(id, 0))
     while (cola.length > 0) {
       const id = cola.shift()!
       for (const v of salientes.get(id)!) {
-        capa.set(v, Math.max(capa.get(v) ?? 0, capa.get(id)! + 1))
+        nivel.set(v, Math.max(nivel.get(v) ?? 0, nivel.get(id)! + 1))
         pendientes.set(v, pendientes.get(v)! - 1)
         if (pendientes.get(v) === 0) cola.push(v)
       }
     }
   }
-
-  // BFS para lo que quedó (grafo no dirigido, o nodos en ciclos).
   for (const inicio of orden) {
-    if (capa.has(inicio.id)) continue
-    const previas = entrantes.get(inicio.id)!.filter((u) => capa.has(u)).map((u) => capa.get(u)! + 1)
-    capa.set(inicio.id, Math.max(0, ...previas))
+    if (nivel.has(inicio.id)) continue
+    const previos = entrantes.get(inicio.id)!.filter((u) => nivel.has(u)).map((u) => nivel.get(u)! + 1)
+    nivel.set(inicio.id, Math.max(0, ...previos))
     const cola = [inicio.id]
     while (cola.length > 0) {
       const id = cola.shift()!
       for (const v of salientes.get(id)!) {
-        if (capa.has(v)) continue
-        capa.set(v, capa.get(id)! + 1)
+        if (nivel.has(v)) continue
+        nivel.set(v, nivel.get(id)! + 1)
         cola.push(v)
       }
     }
   }
+  return nivel
+}
 
-  const columnas: (typeof orden)[] = []
-  for (const n of orden) (columnas[capa.get(n.id)!] ??= []).push(n)
+/**
+ * Acomoda los nodos en una matriz con la proporción del lienzo (`proporcion` = ancho / alto),
+ * para que todo entre en pantalla. Se llena por filas, de izquierda a derecha:
+ * - si todos los nombres son números, en orden numérico;
+ * - si no, siguiendo las aristas (nivel) y, dentro del mismo nivel, por nombre.
+ * Cada nodo ocupa su propia celda, así que nunca se superponen. Determinístico.
+ */
+export function organizar(grafo: Grafo, dirigido: boolean, proporcion = 16 / 9): Posiciones {
+  const posiciones: Posiciones = {}
+  if (grafo.nodos.length === 0) return posiciones
 
-  let x = 0
-  let anchoPrevio = 0
-  for (const columna of columnas.filter(Boolean)) {
-    const ancho = Math.max(...columna.map((n) => anchoNodo(n.nombre)))
-    if (anchoPrevio > 0) x += anchoPrevio / 2 + SEPARACION_X + ancho / 2
-    columna.forEach((n, i) => {
-      posiciones[n.id] = { x, y: (i - (columna.length - 1) / 2) * SEPARACION_Y }
-    })
-    anchoPrevio = ancho
+  let orden = [...grafo.nodos].sort((a, b) => compararNombres(a.nombre, b.nombre))
+  if (!orden.every((n) => /^\d+$/.test(n.nombre.trim()))) {
+    const nivel = niveles(grafo, dirigido, orden)
+    orden = orden.map((n, i) => ({ n, i })).sort((a, b) => nivel.get(a.n.id)! - nivel.get(b.n.id)! || a.i - b.i).map((e) => e.n)
   }
+
+  const anchoCelda = Math.max(...orden.map((n) => anchoNodo(n.nombre))) + SEPARACION_X
+  const altoCelda = ALTO_NODO + SEPARACION_Y
+  const total = orden.length
+  const columnas = Math.min(total, Math.max(1, Math.round(Math.sqrt((total * proporcion * altoCelda) / anchoCelda))))
+
+  orden.forEach((n, i) => {
+    const columna = i % columnas
+    const fila = Math.floor(i / columnas)
+    posiciones[n.id] = {
+      x: columna * anchoCelda,
+      y: fila * altoCelda + (columna % 2) * altoCelda * ESCALON,
+    }
+  })
   return posiciones
 }
