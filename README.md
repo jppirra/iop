@@ -1,6 +1,6 @@
 # Grupo 3 - IOP 2026
 
-Versión **v1.001.014**
+Versión **v1.001.015**
 
 > Documento de entrega del TPI (cumplimiento de la consigna, guía de demostración y preguntas sobre el desarrollo): [ENTREGA.md](ENTREGA.md). Informe de avance (4 páginas): [INFORME.md](INFORME.md), que también se ve con el estilo de la app en `/informe`. Detalle de cada modelo: [MANUAL.md](MANUAL.md).
 
@@ -96,6 +96,7 @@ Entrando a `http://localhost:5173/config` (no hay ningún enlace desde la app) s
 
 - **Algoritmos disponibles**: Prim, Kruskal, Dijkstra, Ford-Fulkerson, CPM y/o PERT (al menos uno). Solo se ven los que figuran en `estrategias` de `config.json` (hoy los seis): un algoritmo nuevo queda oculto hasta sumar su id. Si ninguno de los habilitados acepta grafos dirigidos, la opción "Dirigido / No dirigido" se oculta y todo grafo se trata como no dirigido.
 - **Componentes**: pantalla de inicio, paso a paso (botón, controles y leyenda de colores), animaciones, lista "Todos los pasos" del panel de resultados, ejemplos del libro, ejemplo aleatorio, carga masiva, exportar, JSON de ejemplo e integrantes.
+- **Efectos visuales** (cada uno se apaga por separado): animación de entrada (grafo que se arma con el título y los integrantes, una vez por sesión; `?intro` la fuerza), pulso de luz sobre las aristas del resultado, marcos del resumen del resultado y, en `/presentacion`, transición escáner, números que cuentan, fondo de red en portada y cierre, e índice de diapositivas (tecla O o ☰, y 1 a 9 para saltar).
 - Sin paso a paso ni animaciones, "Ejecutar" muestra directamente el resultado.
 
 Hay dos niveles:

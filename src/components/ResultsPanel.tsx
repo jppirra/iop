@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { fmt as fmtTiempo, probabilidadDeTerminar } from '../algorithms/proyecto'
 import { leerPeso } from '../parsers'
 import type { Ejecucion, Paso, ResultadoArbol, ResultadoFlujo, ResultadoProyecto, ResultadoRuta } from '../types/graph'
@@ -8,15 +8,21 @@ interface Props {
   indice: number
   /** Lista "Todos los pasos". */
   mostrarHistorial: boolean
+  /** Marcos tipo HUD alrededor del resumen del resultado. */
+  marcosHud?: boolean
   onIr: (indice: number) => void
 }
 
-export function ResultsPanel({ ejecucion, indice, mostrarHistorial, onIr }: Props) {
+/** El resumen del resultado (Aviso "ok") lleva marco HUD si está habilitado en /config. */
+const ConMarcoHud = createContext(false)
+
+export function ResultsPanel({ ejecucion, indice, mostrarHistorial, marcosHud = false, onIr }: Props) {
   const paso = ejecucion.pasos[indice]
   const final = indice === ejecucion.pasos.length - 1
   const { resultado } = ejecucion
 
   return (
+    <ConMarcoHud.Provider value={marcosHud}>
     <div className="space-y-4">
       <PasoActual paso={paso} />
 
@@ -27,6 +33,7 @@ export function ResultsPanel({ ejecucion, indice, mostrarHistorial, onIr }: Prop
 
       {mostrarHistorial && <Historial pasos={ejecucion.pasos} indice={indice} onIr={onIr} />}
     </div>
+    </ConMarcoHud.Provider>
   )
 }
 
@@ -43,22 +50,25 @@ function PasoActual({ paso }: { paso: Paso }) {
 }
 
 function Aviso({ tipo, children }: { tipo: 'error' | 'aviso' | 'ok'; children: React.ReactNode }) {
+  const hud = useContext(ConMarcoHud) && tipo === 'ok'
   const clases = {
     error: 'bg-red-50 text-red-700',
     aviso: 'bg-amber-50 text-amber-900',
     ok: 'bg-blue-50 text-blue-900',
   }[tipo]
-  return <div className={`rounded-md px-3 py-2 text-sm ${clases}`}>{children}</div>
+  return <div className={`rounded-md px-3 py-2 text-sm ${clases}${hud ? ' hud' : ''}`}>{children}</div>
 }
 
 function ResultadoArbolVista({ resultado, paso, final }: { resultado: ResultadoArbol; paso: Paso; final: boolean }) {
   const incluidas = new Set(paso.aristasIncluidas)
   const filas = resultado.aristas.filter((a) => incluidas.has(a.aristaId))
   const parcial = filas.reduce((s, a) => s + a.peso, 0)
+  const hud = useContext(ConMarcoHud) && final && resultado.conexo
 
   return (
     <section className="space-y-2">
       <h3 className="text-sm font-semibold text-slate-800">Aristas elegidas</h3>
+      <div className={hud ? 'hud' : undefined}>
       <table className="tabla">
         <thead>
           <tr>
@@ -96,6 +106,7 @@ function ResultadoArbolVista({ resultado, paso, final }: { resultado: ResultadoA
           </tr>
         </tfoot>
       </table>
+      </div>
       {final && !resultado.conexo && (
         <Aviso tipo="error">
           El grafo no es conexo. Quedan sin conectar: {resultado.nodosSinConectar.join(', ')}.

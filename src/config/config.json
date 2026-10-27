@@ -10,5 +10,12 @@
   "cargaMasiva": true,
   "exportar": true,
   "ejemploJson": true,
-  "integrantes": true
+  "integrantes": true,
+  "introAnimada": true,
+  "pulsoResultado": true,
+  "marcosHud": true,
+  "transicionEscaner": true,
+  "conteoNumeros": true,
+  "fondoRed": true,
+  "indicePresentacion": true
 }

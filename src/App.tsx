@@ -426,6 +426,7 @@ export default function App() {
               animaciones={config.animaciones}
               paso={paso}
               resultado={vigente?.resultado ?? null}
+              pulso={config.pulsoResultado && !!vigente && !reproduciendo && indice >= vigente.pasos.length - 1}
               bloqueado={abierto}
               onDobleClickFondo={alDobleClickFondo}
               onDobleClickNodo={alDobleClickNodo}
@@ -453,6 +454,7 @@ export default function App() {
               ejecucion={vigente}
               indice={Math.min(indice, vigente.pasos.length - 1)}
               mostrarHistorial={config.historialPasos}
+              marcosHud={config.marcosHud}
               onIr={(i) => {
                 setReproduciendo(false)
                 irAPaso(i)

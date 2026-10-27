@@ -1,8 +1,9 @@
 import type { Core, EventObject, StylesheetJson } from 'cytoscape'
-import { useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import CytoscapeComponent from 'react-cytoscapejs'
 import { textoPeso } from '../lib/grafo'
 import type { Grafo, Paso, Resultado } from '../types/graph'
+import { PulsoResultado } from './PulsoResultado'
 
 export interface CanvasApi {
   autoLayout: () => void
@@ -25,6 +26,8 @@ interface Props {
    * (ver `fordFulkerson.ts`): evita duplicar un objeto de todas las aristas por cada paso.
    */
   resultado?: Resultado | null
+  /** Pulso de luz sobre las aristas del resultado (último paso, si está habilitado en /config). */
+  pulso?: boolean
   /** Mientras hay un diálogo abierto se ignoran teclas y clicks. */
   bloqueado: boolean
   onDobleClickFondo: (x: number, y: number) => void
@@ -107,8 +110,9 @@ function estilos(dirigido: boolean, animaciones: boolean): StylesheetJson {
 }
 
 export function GraphCanvas(props: Props) {
-  const { ref, grafo, dirigido, animaciones, paso, resultado } = props
+  const { ref, grafo, dirigido, animaciones, paso, resultado, pulso } = props
   const cyRef = useRef<Core | null>(null)
+  const obtenerCy = useCallback(() => cyRef.current, [])
   const origenRef = useRef<string | null>(null)
   const [origenPendiente, setOrigenPendiente] = useState<string | null>(null)
   // Los eventos de Cytoscape se registran una sola vez: leen siempre las props más recientes.
@@ -278,6 +282,7 @@ export function GraphCanvas(props: Props) {
           }
         }}
       />
+      {pulso && resultado && <PulsoResultado cy={obtenerCy} resultado={resultado} grafo={grafo} />}
       {grafo.nodos.length === 0 && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-slate-400">
           Doble click en el lienzo para agregar un nodo, o cargá un ejemplo del libro.

@@ -95,3 +95,101 @@
     break-inside: avoid;
   }
 }
+
+/* Marcos tipo HUD: cuatro esquinas que se cierran sobre el elemento (resultado de la app). */
+.hud {
+  position: relative;
+}
+.hud::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  pointer-events: none;
+  --c: var(--color-teal-600);
+  background:
+    linear-gradient(var(--c), var(--c)) top left / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) top left / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) top right / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom left / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) bottom right / 2px 14px no-repeat;
+  animation: hud-entra 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes hud-entra {
+  from {
+    opacity: 0;
+    inset: -16px;
+  }
+  to {
+    opacity: 1;
+    inset: -5px;
+  }
+}
+
+/* /presentacion: transición escáner. La diapositiva se revela detrás de una franja ámbar. */
+.escaner-revela {
+  animation: escaner-revela 0.62s cubic-bezier(0.6, 0.05, 0.25, 1) both;
+}
+@keyframes escaner-revela {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+.escaner-barra {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4px;
+  z-index: 20;
+  pointer-events: none;
+  background: var(--color-amber-400);
+  box-shadow:
+    0 0 18px 4px rgb(251 191 36 / 0.75),
+    0 0 60px 12px rgb(251 191 36 / 0.25);
+  animation: escaner-barra 0.62s cubic-bezier(0.6, 0.05, 0.25, 1) both;
+}
+@keyframes escaner-barra {
+  from {
+    left: 0;
+    opacity: 1;
+  }
+  92% {
+    opacity: 1;
+  }
+  to {
+    left: 100%;
+    opacity: 0;
+  }
+}
+.escaner-revela h2 {
+  animation: escaner-glitch 0.5s steps(2) 0.55s both;
+}
+@keyframes escaner-glitch {
+  0% {
+    text-shadow: 3px 0 rgb(251 191 36 / 0.8), -3px 0 rgb(13 148 136 / 0.6);
+  }
+  50% {
+    text-shadow: -2px 0 rgb(251 191 36 / 0.7), 2px 0 rgb(13 148 136 / 0.5);
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud::after,
+  .escaner-revela,
+  .escaner-revela h2,
+  .escaner-barra {
+    animation: none !important;
+  }
+  .escaner-barra {
+    display: none;
+  }
+}

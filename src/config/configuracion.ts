@@ -20,6 +20,20 @@ export interface Configuracion {
   ejemploJson: boolean
   integrantes: boolean
   leyenda: boolean
+  /** Animación de entrada al abrir la web (una vez por sesión). */
+  introAnimada: boolean
+  /** Pulso que recorre las aristas del resultado en el lienzo. */
+  pulsoResultado: boolean
+  /** Marcos tipo HUD en el resumen del resultado. */
+  marcosHud: boolean
+  /** /presentacion: transición tipo escáner entre diapositivas. */
+  transicionEscaner: boolean
+  /** /presentacion: los números de los ejemplos cuentan hacia arriba. */
+  conteoNumeros: boolean
+  /** /presentacion: fondo de red de nodos en la portada y el cierre. */
+  fondoRed: boolean
+  /** /presentacion: índice de diapositivas (tecla O) y salto con 1 a 9. */
+  indicePresentacion: boolean
 }
 
 export type ComponenteConfigurable = Exclude<keyof Configuracion, 'estrategias'>
@@ -36,6 +50,13 @@ export const COMPONENTES: { clave: ComponenteConfigurable; titulo: string; descr
   { clave: 'exportar', titulo: 'Exportar', descripcion: 'Botones para descargar el grafo en JSON o CSV (dentro de Carga masiva).', dependeDe: 'cargaMasiva' },
   { clave: 'ejemploJson', titulo: 'JSON de ejemplo', descripcion: 'Enlace para descargar un archivo JSON de ejemplo, listo para editar y subir (dentro de Carga masiva).', dependeDe: 'cargaMasiva' },
   { clave: 'integrantes', titulo: 'Integrantes', descripcion: 'Botón con la lista de integrantes del grupo.' },
+  { clave: 'introAnimada', titulo: 'Animación de entrada', descripcion: 'Al abrir la web, un grafo que se arma solo con el título y los integrantes. Se ve una vez por sesión (?intro la fuerza).' },
+  { clave: 'pulsoResultado', titulo: 'Pulso en el resultado', descripcion: 'En el último paso, un pulso recorre la ruta, el árbol, el flujo o la ruta crítica sobre el lienzo.' },
+  { clave: 'marcosHud', titulo: 'Marcos del resultado', descripcion: 'Esquinas animadas alrededor del resumen del resultado (total, distancia, flujo, duración).' },
+  { clave: 'transicionEscaner', titulo: 'Presentación: transición escáner', descripcion: 'En /presentacion, una franja revela la diapositiva nueva al cambiar.' },
+  { clave: 'conteoNumeros', titulo: 'Presentación: números que cuentan', descripcion: 'En /presentacion, los números de los ejemplos cuentan hacia arriba al entrar.' },
+  { clave: 'fondoRed', titulo: 'Presentación: fondo de red', descripcion: 'En /presentacion, una red de nodos que sigue al mouse en la portada y el cierre.' },
+  { clave: 'indicePresentacion', titulo: 'Presentación: índice', descripcion: 'En /presentacion, índice de diapositivas con la tecla O o el botón ☰, y salto directo con 1 a 9.' },
 ]
 
 export const CLAVE_ALMACENAMIENTO = 'grupo3-iop:configuracion'
@@ -54,6 +75,13 @@ export function configPorDefecto(todas: Estrategia[]): Configuracion {
     ejemploJson: true,
     integrantes: true,
     leyenda: true,
+    introAnimada: true,
+    pulsoResultado: true,
+    marcosHud: true,
+    transicionEscaner: true,
+    conteoNumeros: true,
+    fondoRed: true,
+    indicePresentacion: true,
   }
 }
 

@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useConfiguracion } from '../config/useConfiguracion'
 import { NOMBRE_APP, SUBTITULO_APP, VERSION, integrantes } from '../examples/integrantes'
+import { ConteoActivo, FondoRed, Indice, NumerosAnimados } from './efectos'
+
+/** Fondo de red en portada y cierre (config.fondoRed). */
+const ConFondoRed = createContext(false)
 
 /**
  * Quién presenta cada modelo. Es un reparto inicial en el orden de la lista de integrantes:
@@ -198,8 +203,10 @@ function LinkApp({ url, children }: { url: string; children: ReactNode }) {
 // ---------- Diapositivas ----------
 
 function Portada() {
+  const fondo = useContext(ConFondoRed)
   return (
-    <div className="flex h-full flex-col items-center justify-center text-center">
+    <div className="relative flex h-full flex-col items-center justify-center text-center [&>*:not(canvas)]:relative">
+      {fondo && <FondoRed />}
       <img src="/logo-utn.png" alt="UTN" className="mb-6 h-20 w-auto" />
       <p className="text-sm font-semibold uppercase tracking-wider text-teal-600">Investigación Operativa · {SUBTITULO_APP}</p>
       <h1 className="mt-2 text-4xl font-bold text-teal-800 sm:text-6xl">{NOMBRE_APP}</h1>
@@ -410,7 +417,9 @@ function DiapositivaModelo({ modelo, numero }: { modelo: Modelo; numero: number 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-xl bg-teal-50 p-4">
         <div>
           <p className="text-sm font-semibold text-teal-900">Ejemplo: {modelo.ejemplo.titulo}</p>
-          <p className="text-teal-900">{modelo.ejemplo.resultado}</p>
+          <p className="text-teal-900">
+            <NumerosAnimados texto={modelo.ejemplo.resultado} />
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
           {modelo.links.map((l) => (
@@ -425,8 +434,10 @@ function DiapositivaModelo({ modelo, numero }: { modelo: Modelo; numero: number 
 }
 
 function Cierre() {
+  const fondo = useContext(ConFondoRed)
   return (
-    <div className="flex h-full flex-col items-center justify-center text-center">
+    <div className="relative flex h-full flex-col items-center justify-center text-center [&>*:not(canvas)]:relative">
+      {fondo && <FondoRed />}
       <h2 className="text-4xl font-bold text-teal-800 sm:text-5xl">¿Preguntas?</h2>
       <p className="mt-4 max-w-xl text-lg text-slate-600">
         La app está publicada y se puede probar con cualquier grafo, o con los ejemplos del libro.
@@ -464,19 +475,37 @@ const desdeHash = () => {
  * Se navega con las flechas, la barra espaciadora o los botones; F pone pantalla completa. Imprimir saca una por hoja.
  */
 export function PresentacionPage() {
+  const { config } = useConfiguracion()
   const [actual, setActual] = useState(desdeHash)
+  /** Cuántas veces se cambió de diapositiva: remonta la actual para repetir la transición. */
+  const [cambios, setCambios] = useState(0)
+  const [indiceAbierto, setIndiceAbierto] = useState(false)
+  const anterior = useRef(actual)
+  const conIndice = config.indicePresentacion
 
   const ir = useCallback((i: number) => setActual(Math.max(0, Math.min(i, DIAPOSITIVAS.length - 1))), [])
 
   useEffect(() => {
     history.replaceState(null, '', `#${actual + 1}`)
+    if (anterior.current !== actual) setCambios((c) => c + 1)
+    anterior.current = actual
   }, [actual])
 
   useEffect(() => {
     const alCambiarHash = () => setActual(desdeHash())
     const alPresionar = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      if (['ArrowRight', 'PageDown', ' '].includes(e.key)) setActual((i) => Math.min(i + 1, DIAPOSITIVAS.length - 1))
+      if (conIndice && e.key.toLowerCase() === 'o') {
+        setIndiceAbierto((a) => !a)
+        e.preventDefault()
+        return
+      }
+      if (indiceAbierto) {
+        if (e.key === 'Escape') setIndiceAbierto(false)
+        return
+      }
+      if (conIndice && /^[1-9]$/.test(e.key)) setActual(Math.min(Number(e.key) - 1, DIAPOSITIVAS.length - 1))
+      else if (['ArrowRight', 'PageDown', ' '].includes(e.key)) setActual((i) => Math.min(i + 1, DIAPOSITIVAS.length - 1))
       else if (['ArrowLeft', 'PageUp'].includes(e.key)) setActual((i) => Math.max(i - 1, 0))
       else if (e.key === 'Home') setActual(0)
       else if (e.key === 'End') setActual(DIAPOSITIVAS.length - 1)
@@ -492,18 +521,24 @@ export function PresentacionPage() {
       window.removeEventListener('hashchange', alCambiarHash)
       window.removeEventListener('keydown', alPresionar)
     }
-  }, [])
+  }, [conIndice, indiceAbierto])
+
+  // Al entrar no hay transición: solo al pasar de una diapositiva a otra.
+  const escaner = config.transicionEscaner && cambios > 0
 
   return (
+    <ConteoActivo.Provider value={config.conteoNumeros}>
+    <ConFondoRed.Provider value={config.fondoRed}>
     <div className="flex min-h-screen flex-col bg-slate-100 text-slate-900 print:block print:bg-white">
       {/* En pantalla se ve una diapositiva; al imprimir, todas (una por hoja). */}
       <main className="flex flex-1 items-center justify-center p-3 sm:p-6 print:block print:p-0">
         {DIAPOSITIVAS.map((d, i) => (
           <section
-            key={d.titulo}
+            key={i === actual ? `${d.titulo}-${cambios}` : d.titulo}
             aria-label={d.titulo}
-            className={`${i === actual ? 'flex' : 'hidden'} min-h-[min(80vh,720px)] w-full max-w-6xl flex-col rounded-2xl bg-white p-6 shadow-sm sm:p-10 print:flex print:min-h-0 print:break-after-page print:rounded-none print:shadow-none`}
+            className={`${i === actual ? 'flex' : 'hidden'} ${i === actual && escaner ? 'escaner-revela' : ''} relative overflow-hidden min-h-[min(80vh,720px)] w-full max-w-6xl flex-col rounded-2xl bg-white p-6 shadow-sm sm:p-10 print:flex print:min-h-0 print:break-after-page print:rounded-none print:shadow-none`}
           >
+            {i === actual && escaner && <div className="escaner-barra print:hidden" aria-hidden="true" />}
             <div className="flex-1">{d.contenido}</div>
             <footer className="mt-6 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-400">
               <span className="flex items-center gap-2">
@@ -537,8 +572,20 @@ export function PresentacionPage() {
         <button className="btn btn-primario" onClick={() => ir(actual + 1)} disabled={actual === DIAPOSITIVAS.length - 1}>
           Siguiente →
         </button>
-        <span className="hidden text-xs text-slate-400 md:inline">Flechas para navegar · F pantalla completa</span>
+        {conIndice && (
+          <button className="btn" onClick={() => setIndiceAbierto(true)} title="Índice (O)" aria-label="Índice de diapositivas">
+            ☰
+          </button>
+        )}
+        <span className="hidden text-xs text-slate-400 md:inline">
+          Flechas para navegar{conIndice && ' · O índice · 1–9 ir a diapositiva'} · F pantalla completa
+        </span>
       </nav>
+      {conIndice && indiceAbierto && (
+        <Indice titulos={DIAPOSITIVAS.map((d) => d.titulo)} actual={actual} onIr={ir} onCerrar={() => setIndiceAbierto(false)} />
+      )}
     </div>
+    </ConFondoRed.Provider>
+    </ConteoActivo.Provider>
   )
 }
