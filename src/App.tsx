@@ -413,6 +413,7 @@ export default function App() {
             onCambiarDirigido={(d) => aplicar((g) => (g.dirigido === d ? g : { ...g, dirigido: d }))}
             onDeshacer={deshacer}
             onAutoLayout={() => canvas.current?.autoLayout()}
+            onOrganizar={() => canvas.current?.organizar()}
             onAjustar={() => canvas.current?.ajustar()}
             onLimpiar={() => {
               if (window.confirm('¿Borrar todos los nodos y aristas? (se puede deshacer)')) aplicar((g) => grafoVacio(g.dirigido))

@@ -11,6 +11,7 @@ interface Props {
   onLimpiar: () => void
   onDeshacer: () => void
   onAutoLayout: () => void
+  onOrganizar: () => void
   onAjustar: () => void
 }
 
@@ -52,6 +53,14 @@ export function Toolbar(p: Props) {
         </button>
         <button className="btn" onClick={p.onAutoLayout} disabled={!p.hayNodos}>
           Auto-layout
+        </button>
+        <button
+          className="btn"
+          onClick={p.onOrganizar}
+          disabled={!p.hayNodos}
+          title="Acomoda los nodos en columnas siguiendo las aristas, ordenados por número o nombre"
+        >
+          Organizar
         </button>
         <button className="btn" onClick={p.onAjustar} disabled={!p.hayNodos}>
           Centrar

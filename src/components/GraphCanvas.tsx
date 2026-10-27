@@ -2,11 +2,14 @@ import type { Core, EventObject, StylesheetJson } from 'cytoscape'
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState, type Ref } from 'react'
 import CytoscapeComponent from 'react-cytoscapejs'
 import { textoPeso } from '../lib/grafo'
+import { organizar } from '../lib/organizar'
 import type { Grafo, Paso, Resultado } from '../types/graph'
 import { PulsoResultado } from './PulsoResultado'
 
 export interface CanvasApi {
   autoLayout: () => void
+  /** Columnas según las aristas, nodos ordenados por nombre (ver `lib/organizar`). */
+  organizar: () => void
   ajustar: () => void
 }
 
@@ -261,6 +264,14 @@ export function GraphCanvas(props: Props) {
         cy.fit(undefined, 50)
       })
       layout.run()
+    },
+    organizar() {
+      const cy = cyRef.current
+      if (!cy || cy.nodes().empty()) return
+      const posiciones = organizar(propsRef.current.grafo, propsRef.current.dirigido)
+      cy.nodes().positions((n) => posiciones[n.id()] ?? n.position())
+      propsRef.current.onMover(posiciones)
+      cy.fit(undefined, 50)
     },
   }))
 
